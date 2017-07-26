@@ -1,5 +1,5 @@
 # DiscordTwitchAnnouncer
-## Announces when a Twitch channel goes live in Discord.
+## Announces when a Twitch channel goes live, in Discord.
 
 ### 5 Step Setup.
   1. Get NodeJS, version 8.1.2 or newer.
