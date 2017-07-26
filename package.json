@@ -1,0 +1,23 @@
+{
+  "name": "discordtwitchannouncer",
+  "version": "1.0.0",
+  "description": "Announces when a Twitch channel goes live.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KararTY/DiscordTwitchAnnouncer.git"
+  },
+  "author": "Karar Al-Remahy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/KararTY/DiscordTwitchAnnouncer/issues"
+  },
+  "homepage": "https://github.com/KararTY/DiscordTwitchAnnouncer#readme",
+  "dependencies": {
+    "discord.js": "^11.1.0",
+    "snekfetch": "^3.2.4"
+  }
+}
