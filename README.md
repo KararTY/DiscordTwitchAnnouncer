@@ -8,7 +8,7 @@
   4. Open up `settings.js` with any text program:
 ```js
 module.exports = {
-  timer: 5000, // Is in milliseconds. Default: 61000 ms = 1 minute & 1 second.
+  timer: 61000, // Is in milliseconds. Default: 61000 ms = 1 minute & 1 second.
   twitch: {
     clientID: '' // Make a Twitch application at https://glass.twitch.tv/console/apps
   },
