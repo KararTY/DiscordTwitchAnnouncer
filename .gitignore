@@ -57,3 +57,5 @@ typings/
 # dotenv environment variables file
 .env
 
+# JSON with data for guilds & streams
+data.json

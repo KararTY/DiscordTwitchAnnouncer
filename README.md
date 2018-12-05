@@ -1,5 +1,5 @@
 # DiscordTwitchAnnouncer
-## Announces when a Twitch channel goes live, in Discord.
+## Announces when Twitch channels go live, in Discord.
 
 ### 5 Step Setup.
   1. Get NodeJS, version 8.1.2 or newer.
@@ -8,20 +8,27 @@
   4. Open up `settings.js` with any text program:
 ```js
 module.exports = {
-  timer: 120000, // Is in milliseconds. Default: 120000 ms = 2 minutes.
+  timer: 5000, // Is in milliseconds. Default: 61000 ms = 1 minute & 1 second.
   twitch: {
-    clientID: '', // Make a new Twitch application in https://www.twitch.tv/settings/connections
-    channels: ['datblindarcher', 'datguyseathus'] // https://www.twitch.tv/<Streamer>
+    clientID: '' // Make a Twitch application at https://glass.twitch.tv/console/apps
   },
   discord: {
-    auth: '', // https://discordapp.com/developers/applications/me/
-    announceChannel: '' // Enable Discord developer mode and then right click channel & "Copy ID" you want announcements to be sent to.
+    token: '' // https://discordapp.com/developers/applications/me/
   }
 }
 ```
-  5. Change the fields accordingly. *(All fields must have a value, otherwise program will error.)*
+  5. Change the fields accordingly. *(Fields `twitch.clientID` & `discord.token` must have a value, otherwise program will error.)*
 
 **Type `node app.js` in your console/terminal to run program.**
+
+After you've started the announcer, invite the bot and go to your discord channel.
+
+#### Commands
+Available commands:
+* `!help`
+* (Example) `!add Streamer_Name`
+* (Example) `!remove Streamer_Name`
+* (Example) `!channel #general` or (Example) `!channel 000000000000000000`
 
 ### Prerequisites
  * NodeJS version >= 8.1.2

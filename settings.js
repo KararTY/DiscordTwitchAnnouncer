@@ -1,16 +1,14 @@
 module.exports = {
-  timer: 120000, // Is in milliseconds. Default: 120000 ms = 2 minutes.
+  timer: 61000, // Is in milliseconds. Default: 61000 ms = 1 minute & 1 second.
   twitch: {
-    clientID: '', // Make a new Twitch application in https://www.twitch.tv/settings/connections
-    channels: ['datblindarcher', 'datguyseathus'] // https://www.twitch.tv/<Streamer>
+    clientID: '' // Make a Twitch application at https://glass.twitch.tv/console/apps
   },
   discord: {
-    auth: '', // https://discordapp.com/developers/applications/me/
-    announceChannel: '' // Enable Discord developer mode and then right click channel & "Copy ID" you want announcements to be sent to.
+    token: '' // https://discordapp.com/developers/applications/me/
   }
 }
 
 /**
- *Example invite link
+ *Example invite link for bot
  *https://discordapp.com/oauth2/authorize?&client_id=<clientid from Discord>&scope=bot&permissions=0
  */
