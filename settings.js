@@ -4,7 +4,8 @@ module.exports = {
     clientID: '' // Make a Twitch application at https://glass.twitch.tv/console/apps
   },
   discord: {
-    token: '' // https://discordapp.com/developers/applications/me/
+    token: '', // https://discordapp.com/developers/applications/me/
+    permissionForCommands: 'MANAGE_ROLES' // https://discordapp.com/developers/docs/topics/permissions
   }
 }
 

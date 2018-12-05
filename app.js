@@ -25,8 +25,8 @@ let cache = {}
 let disconnect = false
 
 client.on('message', message => {
-  // Only accept messages from a guild and from a guild member with the permission to manage roles for the guild, or from myself (aka self-bot) in a guild.
-  if ((message.guild && message.member && message.member.hasPermission('MANAGE_ROLES', false, true, true)) || (message.guild && message.member && message.author.id === client.user.id)) {
+  // Only accept messages from a guild and from a guild member with the requierd permission, or from myself (aka self-bot) in a guild.
+  if ((message.guild && message.member && message.member.hasPermission(settings.discord.permissionForCommands || 'MANAGE_ROLES', false, true, true)) || (message.guild && message.member && message.author.id === client.user.id)) {
     let cmd = message.content.split(/[ ]+/)
     let streamerName = cmd[1] ? cmd[1].toLowerCase().split('/').pop() : false
     switch (cmd[0].toLowerCase()) {
