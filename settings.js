@@ -6,7 +6,7 @@ module.exports = {
   discord: {
     token: '', // https://discordapp.com/developers/applications/me/
     permissionForCommands: 'MANAGE_ROLES', // https://discordapp.com/developers/docs/topics/permissions
-    message: '@everyone' // Before the url and stream type. Default: '@everyone' = '@everyone LIVE! https://twitch.tv/stream'
+    message: '@everyone' // The text on announcement, before the url and stream type. Default: '@everyone' = '@everyone LIVE! https://twitch.tv/stream'
   }
 }
 
