@@ -39,9 +39,9 @@ client.on('message', message => {
         if (streamerName) {
           if (cache[message.guild.id].findIndex(s => s.name.toLowerCase() === streamerName) > -1) return message.reply('already added!')
           cache[message.guild.id].push({ name: streamerName })
-          data.guilds[message.guild.id].streamers.push(streamerName)
+          data.guilds[message.guild.id].streamers.push({ name: streamerName })
           fs.writeFile(path.join(__dirname, 'data.json'), JSON.stringify(data), (err) => {
-            if (!err) message.reply('added streamer to announcer.')
+            if (!err) message.reply(`added streamer to announcer. ${data.guilds[message.guild.id].announcementChannel ? '' : "\nDon't forget to add announcement channel with `!channel #channelName`."}`)
           })
         } else message.reply('Example: `!add Streamer_Name`')
         break
@@ -54,7 +54,7 @@ client.on('message', message => {
         if (streamerName) {
           if (cache[message.guild.id].findIndex(s => s.name.toLowerCase() === streamerName) === -1) return message.reply('doesn\'t exist!')
           cache[message.guild.id] = cache[message.guild.id].filter(s => s.name.toLowerCase() !== streamerName)
-          data.guilds[message.guild.id].streamers = data.guilds[message.guild.id].streamers.filter(s => s !== streamerName)
+          data.guilds[message.guild.id].streamers = data.guilds[message.guild.id].streamers.filter(s => s.name !== streamerName)
           fs.writeFile(path.join(__dirname, 'data.json'), JSON.stringify(data), (err) => {
             if (!err) message.reply('removed streamer from announcer.')
           })
@@ -121,7 +121,7 @@ client.once('ready', () => {
 
       for (let i = 0; i < guild.streamers.length; i++) {
         const streamer = guild.streamers[i]
-        cache[guildID].push({ name: streamer, streaming: false })
+        cache[guildID].push({ name: streamer.name, streaming: false })
       }
     }
   }
@@ -132,16 +132,17 @@ client.once('ready', () => {
     let streamers = new Set()
     for (const guildID in data.guilds) {
       if (data.guilds.hasOwnProperty(guildID)) {
-        data.guilds[guildID].streamers.forEach(stream => streamers.add(stream))
+        if (data.guilds[guildID].streamers) data.guilds[guildID].streamers.forEach(stream => streamers.add(stream.name))
       }
     }
     if ([...streamers].length < 1) return console.log('No Twitch channels. Add some!')
     ftch(`https://api.twitch.tv/helix/streams?${[...streamers].map((i, ind) => ind > 0 ? '&user_login=' + i : 'user_login=' + i).join('')}`, { headers }).then(res => { return res.json() }).then(res => {
+      if (res.error === 'Too Many Requests') return console.log('Throttled by Twitch! Increase timer in settings.js and restart!', 'Twitch throttle message:', res.message)
       let streams = []
       for (let i = 0; i < res.data.length; i++) {
         let stream = res.data[i]
         streams.push({
-          name: stream.user_name,
+          name: stream.user_name.replace(/ /g, ''),
           gameID: stream.game_id,
           thumbnail: stream.thumbnail_url.replace('{width}x{height}', '1280x720'),
           type: stream.type,
@@ -151,17 +152,27 @@ client.once('ready', () => {
         })
       }
       let promise = []
+      let cachedImages = {}
       if (streams.length > 0) {
         let games = streams.filter(s => s.gameID).map(s => s.gameID)
         promise.push(new Promise((resolve, reject) => { ftch(`https://api.twitch.tv/helix/games?${games.map((i, ind) => ind > 0 ? '&id=' + i : 'id=' + i).join('')}`, { headers }).then(res => res.json()).then(res => resolve(res)) }))
+        streams.forEach(s => {
+          promise.push(new Promise((resolve, reject) => {
+            let imageName = s.thumbnail
+            ftch(s.thumbnail).then(res => res.buffer()).then(res => {
+              cachedImages[imageName] = res
+              resolve()
+            })
+          }))
+        })
       }
       Promise.all(promise).then(res => {
         for (const guildID in data.guilds) {
           if (data.guilds.hasOwnProperty(guildID)) {
             for (let i = 0; i < cache[guildID].length; i++) {
-              if (streams.map(s => s.name.toLowerCase()).includes(cache[guildID][i].name.toLowerCase())) {
+              if (streams.map(s => s.name.toLowerCase()).includes(cache[guildID][i].name ? cache[guildID][i].name.toLowerCase() : '')) {
                 // Make sure they're not already live.
-                if (!cache[guildID][i].streaming) {
+                if (!cache[guildID][i].streaming && new Date(streams[streams.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())].started).getTime() > new Date(data.guilds[guildID].streamers[data.guilds[guildID].streamers.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())].lastStartedAt || 0).getTime()) {
                   // Push info
                   let streamInfo = streams[streams.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())]
                   let gameInfo = res[0] ? res[0].data[res[0].data.findIndex(g => g.id === streamInfo.gameID)] : undefined
@@ -170,17 +181,21 @@ client.once('ready', () => {
                   cache[guildID][i].game = gameInfo
                   cache[guildID][i].streaming = true
 
+                  data.guilds[guildID].streamers[i].lastStartedAt = cache[guildID][i].started
+                  fs.writeFileSync(path.join(__dirname, 'data.json'), JSON.stringify(data))
+
                   if (data.guilds[guildID].announcementChannel) {
                     // Announce here!
+                    let imageFileName = `${cache[guildID][i].name}_${Date.now()}.jpg`
                     let embed = new Discord.RichEmbed()
                       .setColor(0x6441A4)
                       .setTitle(`[${cache[guildID][i].type.toUpperCase()}] ${cache[guildID][i].name}`)
                       .setDescription(`**${cache[guildID][i].title}**\n${cache[guildID][i].game ? cache[guildID][i].game.name : ''}`)
-                      .setImage(cache[guildID][i].thumbnail)
-                      .setFooter('Discord Twitch Announcer', cache[guildID][i].game ? cache[guildID][i].game.box_art_url.replace('{width}x{height}', '32x64') : undefined)
+                      .setImage(`attachment://${imageFileName}`)
+                      .setFooter(`Stream started ${new Date(cache[guildID][i].started).toTimeString()} `, cache[guildID][i].game ? cache[guildID][i].game.box_art_url.replace('{width}x{height}', '32x64') : undefined)
                       .setURL(`http://www.twitch.tv/${cache[guildID][i].name}`)
                     if (client.channels.get(data.guilds[guildID].announcementChannel)) {
-                      client.channels.get(data.guilds[guildID].announcementChannel).send(`@everyone **${cache[guildID][i].type.toUpperCase()}!** http://www.twitch.tv/${cache[guildID][i].name}`, { embed })
+                      client.channels.get(data.guilds[guildID].announcementChannel).send(`${settings.discord.message} **${cache[guildID][i].type.toUpperCase()}!** http://www.twitch.tv/${cache[guildID][i].name}`, { embed, file: { attachment: cachedImages[cache[guildID][i].thumbnail], name: imageFileName } })
                       console.log('Announcing', cache[guildID][i].name, 'in', client.channels.get(data.guilds[guildID].announcementChannel).name, 'over at guild', client.guilds.get(guildID).name)
                     } else console.log('Could not announce. Announcement channel,', data.guilds[guildID].announcementChannel, 'does not exist over at guild', client.guilds.get(guildID).name)
                   } else console.log('Not announcing. No announcement channel set for guild', client.guilds.get(guildID).name)
@@ -190,7 +205,7 @@ client.once('ready', () => {
           }
         }
       })
-    }).catch(e => console.log(e))
+    }).catch(e => console.error(e))
   }, typeof settings.timer === 'number' ? settings.timer : 61000)
 })
 
