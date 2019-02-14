@@ -6,7 +6,14 @@ module.exports = {
   discord: {
     token: '', // https://discordapp.com/developers/applications/me/
     permissionForCommands: 'MANAGE_ROLES', // https://discordapp.com/developers/docs/topics/permissions
-    message: '@everyone' // The text on announcement, before the url and stream type. Default: '@everyone' = '@everyone LIVE! https://twitch.tv/stream'
+    message: '@everyone', // The text on announcement, before the url and stream type. Default: '@everyone' = '@everyone LIVE! https://twitch.tv/stream'
+    activity: ['LISTENING', 'Twitch API.'] // Status, second entry in array is your custom activity text. If second or first entry is empty, no custom activity will be displayed.
+    /** First entry in the above array can only be the following, and will default to 'PLAYING'.
+     * PLAYING
+     * STREAMING
+     * LISTENING
+     * WATCHING
+     */
   }
 }
 

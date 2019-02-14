@@ -25,13 +25,32 @@ let cache = {}
 let disconnect = false
 
 client.on('message', message => {
-  // Only accept messages from a guild and from a guild member with the required permission, or from myself (aka self-bot) in a guild.
-  if ((message.guild && message.member && message.member.hasPermission(settings.discord.permissionForCommands || 'MANAGE_ROLES', false, true, true)) || (message.guild && message.member && message.author.id === client.user.id)) {
+  let allow = false
+  if (message.guild && message.member) {
+    // If message comes from a guild and guild member.
+    if (data.guilds[message.guild.id].operator && data.guilds[message.guild.id].operator.length > 0) {
+      // If server has operators set.
+      if (data.guilds[message.guild.id].operator.includes(message.author.id)) {
+        // If message is from an operator.
+        allow = true
+      } else if (message.author.id === message.guild.owner.id) {
+        // Or from server owner.
+        allow = true
+      }
+    } else if (message.member.hasPermission((settings.discord.permissionForCommands || 'MANAGE_ROLES'), false, true, true)) {
+      // If message from a guild member with the required permission.
+      allow = true
+    } else if (!message.author.bot && (message.author.id === client.user.id)) {
+      // If from myself (aka self-bot) in a guild.
+      allow = true
+    }
+  }
+  if (allow) {
     let cmd = message.content.split(/[ ]+/)
     let streamerName = cmd[1] ? cmd[1].toLowerCase().split('/').pop() : false
     switch (cmd[0].toLowerCase()) {
       case '!help':
-        message.reply(`\n(Example) \`!channel #${message.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.guild.me).has('SEND_MESSAGES')).first().name}\` or (Example) \`!channel ${message.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.guild.me).has('SEND_MESSAGES')).first().id}\` (**Required!** Text channel for announcements.)\n(Example) \`!add Streamer_Name\` (Adds a Twitch stream to the announcer.)\n(Example) \`!remove Streamer_Name\` (Removes a Twitch stream from the announcer.)`)
+        message.reply(`\n(Example) \`!channel #${message.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.guild.me).has('SEND_MESSAGES')).first().name}\` or (Example) \`!channel ${message.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.guild.me).has('SEND_MESSAGES')).first().id}\` (**Required!** Text channel for announcements.)\n(Example) \`!add Streamer_Name\` (Adds a Twitch stream to the announcer.)\n(Example) \`!remove Streamer_Name\` (Removes a Twitch stream from the announcer.)\n(Example) \`!operator <@${message.author.id}>\` (Adds, or removes, a bot operator. *Will override permissionForCommands variable in settings file & having 0 operators will re-enable permissionForCommands variable.)`)
         break
       case '!add':
       case '!+':
@@ -40,9 +59,8 @@ client.on('message', message => {
           if (cache[message.guild.id].findIndex(s => s.name.toLowerCase() === streamerName) > -1) return message.reply('already added!')
           cache[message.guild.id].push({ name: streamerName })
           data.guilds[message.guild.id].streamers.push({ name: streamerName })
-          fs.writeFile(path.join(__dirname, 'data.json'), JSON.stringify(data), (err) => {
-            if (!err) message.reply(`added streamer to announcer. ${data.guilds[message.guild.id].announcementChannel ? '' : "\nDon't forget to add announcement channel with `!channel #channelName`."}`)
-          })
+          fs.writeFileSync(path.join(__dirname, 'data.json'), JSON.stringify(data))
+          message.reply(`added streamer to announcer. ${data.guilds[message.guild.id].announcementChannel ? '' : "\nDon't forget to add announcement channel with `!channel #channelName`."}`)
         } else message.reply('Example: `!add Streamer_Name`')
         break
       case '!remove':
@@ -55,9 +73,8 @@ client.on('message', message => {
           if (cache[message.guild.id].findIndex(s => s.name.toLowerCase() === streamerName) === -1) return message.reply('doesn\'t exist!')
           cache[message.guild.id] = cache[message.guild.id].filter(s => s.name.toLowerCase() !== streamerName)
           data.guilds[message.guild.id].streamers = data.guilds[message.guild.id].streamers.filter(s => s.name !== streamerName)
-          fs.writeFile(path.join(__dirname, 'data.json'), JSON.stringify(data), (err) => {
-            if (!err) message.reply('removed streamer from announcer.')
-          })
+          fs.writeFileSync(path.join(__dirname, 'data.json'), JSON.stringify(data))
+          message.reply('removed streamer from announcer.')
         } else message.reply('Example: `!remove Streamer_Name`')
         break
       case '!channel':
@@ -68,11 +85,28 @@ client.on('message', message => {
           let channelID = cmd[1].replace(/[^0-9]/g, '')
           if (message.guild.channels.get(channelID) && message.guild.channels.get(channelID).memberPermissions(message.guild.me).has('SEND_MESSAGES')) {
             data.guilds[message.guild.id].announcementChannel = channelID
-            fs.writeFile(path.join(__dirname, 'data.json'), JSON.stringify(data), (err) => {
-              if (!err) message.reply('changed announcement channel.')
-            })
+            fs.writeFileSync(path.join(__dirname, 'data.json'), JSON.stringify(data))
+            message.reply('changed announcement channel.')
           } else message.reply('can not post in that channel. Change permissions, or choose another channel.')
         } else message.reply(`Example: \`!channel #${message.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.guild.me).has('SEND_MESSAGES')).first().name}\` \`!channel ${message.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.guild.me).has('SEND_MESSAGES')).first().id}\``)
+        break
+      case '!operator':
+      case '!op':
+        if (message.author.id === message.guild.owner.id) {
+          if (cmd[1]) {
+            let operator = cmd[1].replace(/[^0-9]/g, '')
+            let added = true
+            if (data.guilds[message.guild.id].operator && data.guilds[message.guild.id].operator.includes(operator)) {
+              added = false
+              data.guilds[message.guild.id].operator.splice(data.guilds[message.guild.id].operator.indexOf(operator), 1)
+            } else {
+              if (!data.guilds[message.guild.id].operator) data.guilds[message.guild.id].operator = []
+              data.guilds[message.guild.id].operator.push(operator)
+            }
+            fs.writeFileSync(path.join(__dirname, 'data.json'), JSON.stringify(data))
+            message.reply(`${typeof added === 'boolean' ? (added ? 'added' : 'removed') : added} operator.`)
+          } else message.reply(`Example: \`!operator <@${message.author.id}>\` (Toggle)`)
+        } else message.reply('Only guild owner can add and remove operators.')
         break
     }
   }
@@ -101,6 +135,10 @@ client.on('guildDelete', guild => {
 
 client.once('ready', () => {
   console.log('Logged into Discord.')
+  if (settings.discord.activity[0].length > 0 && settings.discord.activity[1].length > 0) {
+    let possibleActivities = ['PLAYING', 'STREAMING', 'LISTENING', 'WATCHING']
+    client.user.setActivity(settings.discord.activity[1], { type: possibleActivities.includes(settings.discord.activity[0].toUpperCase()) ? settings.discord.activity[0].toUpperCase() : 'PLAYING' }).then(() => console.log(`Activity has been set.`)).catch(console.error)
+  }
 
   client.guilds.forEach(guild => {
     if (!data.guilds[guild.id]) {
@@ -132,7 +170,7 @@ client.once('ready', () => {
     let streamers = new Set()
     for (const guildID in data.guilds) {
       if (data.guilds.hasOwnProperty(guildID)) {
-        if (data.guilds[guildID].streamers) data.guilds[guildID].streamers.forEach(stream => streamers.add(stream.name))
+        if (data.guilds[guildID].streamers && client.guilds.find(i => i.id === guildID)) data.guilds[guildID].streamers.forEach(stream => streamers.add(stream.name))
       }
     }
     if ([...streamers].length < 1) return console.log('No Twitch channels. Add some!')
