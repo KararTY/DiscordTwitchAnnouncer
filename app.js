@@ -79,7 +79,7 @@ const commands = [
       seconds = seconds % 3600
       let minutes = parseInt(seconds / 60)
       seconds = seconds % 60
-      return message.discord.reply(`Been online for ${minutes > 0 ? `${hours > 0 ? `${hours} hours,` : ''}${minutes} minutes and ` : ''}${seconds.toFixed(0)} seconds.\n(Online since ${moment.utc(initialization).locale(data.guilds[message.discord.guild.id].time.locale).tz(data.guilds[message.discord.guild.id].time.timeZone).format('LL LTS')}.)`)
+      return message.discord.reply(`Been online for ${minutes > 0 ? `${hours > 0 ? `${hours} hours,` : ''}${minutes} minutes and ` : ''}${seconds.toFixed(0)} seconds.\n(Online since ${moment.utc(initialization).locale(data.guilds[message.discord.guild.id].time.locale).tz(data.guilds[message.discord.guild.id].time.timeZone).format('LL LTS zz')}.)`)
     }
   }),
   new Command({
@@ -183,7 +183,7 @@ const commands = [
           data.guilds[message.discord.guild.id].time.timeZone = message.cmd[2]
         }
         fs.writeFileSync(path.join(__dirname, 'data.json'), JSON.stringify(data))
-        return message.discord.reply(`Time will now be displayed as: ${moment.utc().locale(data.guilds[message.discord.guild.id].time.locale).tz(data.guilds[message.discord.guild.id].time.timeZone).format('LL LTS')}`)
+        return message.discord.reply(`Time will now be displayed as: ${moment.utc().locale(data.guilds[message.discord.guild.id].time.locale).tz(data.guilds[message.discord.guild.id].time.timeZone).format('LL LTS zz')}`)
       } else return false
     }
   })
@@ -334,7 +334,7 @@ client.once('ready', () => {
                       .setTitle(`[${cache[guildID][i].type.toUpperCase()}] ${cache[guildID][i].name}`)
                       .setDescription(`**${cache[guildID][i].title}**\n${cache[guildID][i].game ? cache[guildID][i].game.name : ''}`)
                       .setImage(`attachment://${imageFileName}`)
-                      .setFooter(`Stream started ${moment.utc(cache[guildID][i].started).locale(data.guilds[guildID].time.locale).tz(data.guilds[guildID].time.timeZone).format('LL LTS')} `, cache[guildID][i].game ? cache[guildID][i].game.box_art_url.replace('{width}x{height}', '32x64') : undefined)
+                      .setFooter(`Stream started ${moment.utc(cache[guildID][i].started).locale(data.guilds[guildID].time.locale).tz(data.guilds[guildID].time.timeZone).format('LL LTS zz')} `, cache[guildID][i].game ? cache[guildID][i].game.box_art_url.replace('{width}x{height}', '32x64') : undefined)
                       .setURL(`http://www.twitch.tv/${cache[guildID][i].name}`)
                     if (client.channels.get(data.guilds[guildID].announcementChannel)) {
                       client.channels.get(data.guilds[guildID].announcementChannel).send(`${settings.discord.message} **${cache[guildID][i].type.toUpperCase()}!** http://www.twitch.tv/${cache[guildID][i].name}`, { embed, file: { attachment: cachedImages[cache[guildID][i].thumbnail], name: imageFileName } }).then(message => {
