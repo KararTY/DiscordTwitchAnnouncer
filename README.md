@@ -35,10 +35,14 @@ After you've started the announcer, invite the bot and go to your discord channe
 #### Commands
 Available commands:
 * `!help`
+* `!uptime`
+* (Example) `!timezone sv-SE Europe/Stockholm` Check [IANA BCP 47 Subtag registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry) & [IETF RFC 5646](https://tools.ietf.org/html/rfc5646) for language tags and [IANA Time Zone Database](https://www.iana.org/time-zones) or [Wikipedia](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for timezones.
+* (Example) `!channel #general`
+  * (Example) `!channel 000000000000000000`
+* (Example) `!operator @User_Name`
 * (Example) `!add Streamer_Name`
 * (Example) `!remove Streamer_Name`
-* (Example) `!channel #general` or (Example) `!channel 000000000000000000`
-* (Example) `!operator @User_Name`
+* (Example) `!reaction 👍`
 
 ### Prerequisites
  * NodeJS version >= 8.1.2
