@@ -2,7 +2,7 @@
 ## Announces when Twitch channels go live, in Discord.
 
 ### 5 Step Setup.
-  1. Get NodeJS, version 8.1.2 or newer.
+  1. Get NodeJS, v11.x.x or newer (Tested on v11.12.0).
   2. Git clone or download this repository and then change to the directory in your console/terminal.
   3. Type `npm install` in your console/terminal and wait for dependencies to download and install successfully.
   4. Open up `settings.js` with any text program:
