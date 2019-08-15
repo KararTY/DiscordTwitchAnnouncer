@@ -390,7 +390,6 @@ client.on('message', message => {
 client.on('guildCreate', guild => {
   if (!data.guilds[guild.id]) {
     cache[guild.id] = []
-    data.guilds[guild.id] = defaultGuildData
     saveData([{ guild: guild.id, action: 'addGuild' }])
     console.log('Added guild to list!')
   }
@@ -399,7 +398,6 @@ client.on('guildCreate', guild => {
 client.on('guildDelete', guild => {
   if (data.guilds[guild.id]) {
     cache[guild.id] = undefined
-    data.guilds[guild.id] = undefined
     saveData([{ guild: guild.id, action: 'removeGuild' }])
     console.log('Removed a guild from list!')
   }
