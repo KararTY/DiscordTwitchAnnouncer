@@ -281,6 +281,7 @@ async function check () {
     }
 
     const streamedGames = await Promise.all(promise)
+    const announcements = []
     for (const guildID in data.guilds) {
       if (data.guilds.hasOwnProperty(guildID)) {
         for (let i = 0; i < cache[guildID].length; i++) {
@@ -298,14 +299,15 @@ async function check () {
               data.guilds[guildID].streamers[i].lastStartedAt = cache[guildID][i].started
               saveData([{ guild: guildID, entry: 'streamers', value: data.guilds[guildID].streamers }])
 
-              if (data.guilds[guildID].announcementChannel) await sendMessage(guildID, { cachedImage: cachedImages[cache[guildID][i].thumbnail], streamInfo, gameInfo }) // Send announcement.
+              if (data.guilds[guildID].announcementChannel) announcements.push(sendMessage(guildID, { cachedImage: cachedImages[cache[guildID][i].thumbnail], streamInfo, gameInfo })) // Send announcement.
               else console.log('Not announcing. No announcement channel set for guild', client.guilds.get(guildID).name)
             }
           } else cache[guildID][i].streaming = false // Not live.
         }
       }
     }
-
+    await Promise.all(announcements)
+    if (announcements.length > 0) console.log('Successfully announced all streams.')
     setTimeout(check, typeof settings.timer === 'number' ? settings.timer : 61000)
   } catch (e) {
     if (e.error === 'Too Many Requests') {
@@ -327,6 +329,8 @@ async function sendMessage (guildID, { cachedImage, streamInfo, gameInfo }) {
     .setURL(`http://www.twitch.tv/${streamInfo.name}`)
 
   if (client.channels.get(data.guilds[guildID].announcementChannel)) {
+    console.log('Announcing', streamInfo.name, 'in', client.channels.get(data.guilds[guildID].announcementChannel).name, 'over at guild', client.guilds.get(guildID).name)
+
     let message
     const parsedAnnouncementMessage = data.guilds[guildID].message
       .replace('%name%', streamInfo.name)
@@ -354,7 +358,7 @@ async function sendMessage (guildID, { cachedImage, streamInfo, gameInfo }) {
       }
     }
 
-    console.log('Announcing', streamInfo.name, 'in', client.channels.get(data.guilds[guildID].announcementChannel).name, 'over at guild', client.guilds.get(guildID).name)
+    console.log('Announced', streamInfo.name, 'in', client.channels.get(data.guilds[guildID].announcementChannel).name, 'over at guild', client.guilds.get(guildID).name)
   } else console.log('Could not announce. Announcement channel,', data.guilds[guildID].announcementChannel, 'does not exist over at guild', client.guilds.get(guildID).name)
 
   return Promise.resolve()
