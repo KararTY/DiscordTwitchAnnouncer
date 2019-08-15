@@ -4,7 +4,7 @@
 ### 5 Step Setup.
   1. Get NodeJS, version 8.1.2 or newer.
   2. Git clone or download this repository and then change to the directory in your console/terminal.
-  3. Type `npm i` in your console/terminal and wait for dependencies to download and install successfully.
+  3. Type `npm install` in your console/terminal and wait for dependencies to download and install successfully.
   4. Open up `settings.js` with any text program:
 ```js
 module.exports = {
@@ -43,9 +43,14 @@ Available commands:
 * (Example) `!add Streamer_Name`
 * (Example) `!remove Streamer_Name`
 * (Example) `!reaction 👍`
+* (Example) `!message @here %name% is **%status%** streaming, **%game%**: *%title%*`
+  * `%name%` Streamer's name
+  * `%status%` VOD / LIVE / RERUN?
+  * `%game%` Game name
+  * `%title%` Stream title
 
 ### Prerequisites
- * NodeJS version >= 8.1.2
+ * NodeJS version >= v11.x.x (Tested on v11.12.0)
 
 ### Contributing
 Fork project & Send a pull request. Use eslint, thanks.

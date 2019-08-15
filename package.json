@@ -1,10 +1,11 @@
 {
   "name": "discordtwitchannouncer",
-  "version": "2.5.5",
+  "version": "2.6.0",
   "description": "Discord bot that announces when Twitch channels go live.",
   "main": "app.js",
   "private": true,
   "scripts": {
+    "start": "node ./app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
