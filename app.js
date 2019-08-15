@@ -314,7 +314,11 @@ async function check () {
       settings.timer += 5000
       setTimeout(check, typeof settings.timer === 'number' ? settings.timer : 61000)
       return console.log('Throttled by Twitch! Increase timer in settings.js and restart!', '\nTwitch throttle message:', e.message)
-    } else return console.error(e)
+    } else {
+      settings.timer += 60000
+      setTimeout(check, typeof settings.timer === 'number' ? settings.timer : 61000)
+      return console.error(e)
+    }
   }
 }
 
