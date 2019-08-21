@@ -420,7 +420,6 @@ client.on('message', message => {
   if (allow) {
     const cleanedMessage = message.content.replace(new RegExp(`^<@${client.user.id}> `), '!')
     if (message.cleanContent.startsWith(data.guilds[message.guild.id].prefix || '!') || message.mentions.users.find(u => u.id === client.user.id)) {
-      console.log(message.cleanContent.startsWith(data.guilds[message.guild.id].prefix || '!'), data.guilds[message.guild.id].prefix, cleanedMessage.split(/[ ]+/)[0].toLowerCase().substr(1), cleanedMessage)
       const command = commands.find(command => command.commandNames.indexOf(cleanedMessage.split(/[ ]+/)[0].toLowerCase().substr(data.guilds[message.guild.id].prefix.length)) > -1)
       if (command) command.handler(new Message(message)) || message.reply(command.showHelpText(message)) // Handle command.
     }
