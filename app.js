@@ -63,7 +63,8 @@ const defaultGuildData = {
   announcementChannel: null,
   reactions: [],
   message: '@everyone %name% **%status%**!',
-  time: { locale: Intl.DateTimeFormat().resolvedOptions().locale, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }
+  time: { locale: Intl.DateTimeFormat().resolvedOptions().locale, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+  prefix: '!'
 }
 
 class Message {
