@@ -4,6 +4,7 @@ module.exports = {
     clientID: '' // Make a Twitch application at https://glass.twitch.tv/console/apps
   },
   discord: {
+    defaultPrefix: '!',
     token: '', // https://discordapp.com/developers/applications/me/
     permissionForCommands: 'MANAGE_ROLES', // https://discordapp.com/developers/docs/topics/permissions
     message: '@everyone', // The default text on announcement, before the url and stream type. Can be changed with !message command. Default: '@everyone' = '@everyone LIVE! https://twitch.tv/stream'
