@@ -92,16 +92,29 @@ const commands = [
     helpText: (message) => {
       return `\`${data.guilds[message.discord.guild.id].prefix || '!'}help <command>\` (Replace <command> with a command to get help about a specific command.)`
     },
-    handler: (message) => {
+    handler: async (message) => {
       // Help command.
       let responseText
       if (message.cmd[1]) {
         const command = commands.find(command => command.commandNames.indexOf(message.cmd[1].toLowerCase()) > -1)
         responseText = typeof command.helpText === 'function' ? command.helpText(message) : command.helpText
+        return message.discord.reply(responseText)
       } else {
-        responseText = `**Help commands:** ${commands.map(cmd => `\n${typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText}`)}`
+        try {
+          const embed = new Discord.RichEmbed()
+            .setTitle('Available commands')
+          for (let index = 0; index < commands.length; index++) {
+            const cmd = commands[index]
+            embed.addField(cmd.commandNames.join(', '), typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText)
+          }
+          await message.discord.channel.send('**Help commands:**', { embed })
+        } catch (err) {
+          if (err.message === 'Missing Permissions') {
+            responseText = `**Help commands:** ${commands.map(cmd => `\n${typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText}`)}`
+            return message.discord.reply(responseText)
+          }
+        }
       }
-      return message.discord.reply(responseText)
     }
   }),
   new Command({
