@@ -71,6 +71,8 @@ class Message {
   constructor (message) {
     this.cmd = message.content.replace(new RegExp(`^<@${client.user.id}> `), '!').split(/[ ]+/)
     this.discord = message
+    this.gid = message.guild.id
+    this.prefix = data.guilds[this.gid].prefix || '!'
   }
 }
 
@@ -90,15 +92,13 @@ const commands = [
   new Command({
     commandNames: ['h', 'help'],
     helpText: (message) => {
-      return `\`${data.guilds[message.discord.guild.id].prefix || '!'}help <command>\` (Replace <command> with a command to get help about a specific command.)`
+      return `\`${message.prefix}help <command>\` (Replace <command> with a command to get help about a specific command.)`
     },
     handler: async (message) => {
       // Help command.
-      let responseText
       if (message.cmd[1]) {
         const command = commands.find(command => command.commandNames.indexOf(message.cmd[1].toLowerCase()) > -1)
-        responseText = typeof command.helpText === 'function' ? command.helpText(message) : command.helpText
-        return message.discord.reply(responseText)
+        return message.discord.reply(typeof command.helpText === 'function' ? command.helpText(message) : command.helpText)
       } else {
         try {
           const embed = new Discord.RichEmbed()
@@ -110,8 +110,7 @@ const commands = [
           await message.discord.channel.send('**Help commands:**', { embed })
         } catch (err) {
           if (err.message === 'Missing Permissions') {
-            responseText = `**Help commands:** ${commands.map(cmd => `\n${typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText}`)}`
-            return message.discord.reply(responseText)
+            return message.discord.reply(`**Help commands:** ${commands.map(cmd => `\n${typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText}`)}`)
           }
         }
       }
@@ -120,7 +119,7 @@ const commands = [
   new Command({
     commandNames: ['uptime', 'timeup', 'online'],
     helpText: (message) => {
-      return `\`${data.guilds[message.discord.guild.id].prefix || '!'}uptime\` (Shows bot uptime.)`
+      return `\`${message.prefix}uptime\` (Shows bot uptime.)`
     },
     handler: (message) => {
       // Uptime command.
@@ -130,37 +129,47 @@ const commands = [
       seconds = seconds % 3600
       const minutes = parseInt(seconds / 60)
       seconds = seconds % 60
-      return message.discord.reply(`Been online for ${minutes > 0 ? `${hours > 0 ? `${hours} hours,` : ''}${minutes} minutes and ` : ''}${seconds.toFixed(0)} seconds.\n(Online since ${moment.utc(initialization).locale(data.guilds[message.discord.guild.id].time.locale).tz(data.guilds[message.discord.guild.id].time.timeZone).format('LL LTS zz')}.)`)
+      return message.discord.reply(`Been online for ${minutes > 0 ? `${hours > 0 ? `${hours} hours,` : ''}${minutes} minutes and ` : ''}${seconds.toFixed(0)} seconds.\n(Online since ${moment.utc(initialization).locale(data.guilds[message.gid].time.locale).tz(data.guilds[message.gid].time.timeZone).format('LL LTS zz')}.)`)
     }
   }),
   new Command({
     commandNames: ['+', 'add'],
     helpText: (message) => {
-      return `(Example) \`${data.guilds[message.discord.guild.id].prefix || '!'}add Streamer_Name\` (Adds a Twitch stream to the announcer.)`
+      return `(Example) \`${message.prefix}add Streamer_Name\` (Adds a Twitch stream to the announcer.)`
     },
-    handler: (message) => {
+    handler: async (message) => {
       // Add streamer to cache.
       const streamerName = message.cmd[1] ? message.cmd[1].toLowerCase().split('/').pop() : false
       if (streamerName) {
-        if (cache[message.discord.guild.id].findIndex(s => s.name.toLowerCase() === streamerName) > -1) return message.discord.reply('already added!')
-        cache[message.discord.guild.id].push({ name: streamerName })
-        saveData([{ guild: message.discord.guild.id, entry: 'streamers', action: 'push', value: { name: streamerName } }])
-        return message.discord.reply(`added streamer to announcer. ${data.guilds[message.discord.guild.id].announcementChannel ? '' : "\nDon't forget to add announcement channel with `!channel #channelName`."}`)
+        if (cache[message.gid].findIndex(s => s.name.toLowerCase() === streamerName) > -1) return message.discord.reply('already added!')
+        cache[message.gid].push({ name: streamerName })
+        saveData([{ guild: message.gid, entry: 'streamers', action: 'push', value: { name: streamerName } }])
+        const test = { gameInfo: { name: '(DEMO) Game name goes here', box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/Science%20&%20Technology-{width}x{height}.jpg' }, streamInfo: { name: 'twitchdev', type: '(DEMO) Stream type goes here', title: '(DEMO) Stream title goes here' } }
+        try {
+          const embed = streamPreviewEmbed(message.gid, { ...test, imageFileName: null })
+          embed.setImage('https://static-cdn.jtvnw.net/ttv-static/404_preview-1920x1080.jpg')
+          await message.discord.channel.send(parseAnnouncementMessage(message.gid, test), { embed })
+        } catch (err) {
+          if (err.message === 'Missing Permissions') {
+            await message.discord.channel.send(parseAnnouncementMessage(message.gid, test))
+          }
+        }
+        return message.discord.reply(`added streamer to announcer. ${data.guilds[message.gid].announcementChannel ? '' : "\nDon't forget to add announcement channel with `!channel #channelName`."}`)
       } else return false
     }
   }),
   new Command({
     commandNames: ['rem', 'remove', '-', 'del', 'delete'],
     helpText: (message) => {
-      return `(Example) \`${data.guilds[message.discord.guild.id].prefix || '!'}remove Streamer_Name\` (Removes a Twitch stream from the announcer.)`
+      return `(Example) \`${message.prefix}remove Streamer_Name\` (Removes a Twitch stream from the announcer.)`
     },
     handler: (message) => {
       // Remove streamer from cache.
       const streamerName = message.cmd[1] ? message.cmd[1].toLowerCase().split('/').pop() : false
       if (streamerName) {
-        if (cache[message.discord.guild.id].findIndex(s => s.name.toLowerCase() === streamerName) === -1) return message.discord.reply('doesn\'t exist!')
-        cache[message.discord.guild.id] = cache[message.discord.guild.id].filter(s => s.name.toLowerCase() !== streamerName)
-        saveData([{ guild: message.discord.guild.id, entry: 'streamers', value: data.guilds[message.discord.guild.id].streamers.filter(s => s.name !== streamerName) }])
+        if (cache[message.gid].findIndex(s => s.name.toLowerCase() === streamerName) === -1) return message.discord.reply('doesn\'t exist!')
+        cache[message.gid] = cache[message.gid].filter(s => s.name.toLowerCase() !== streamerName)
+        saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers.filter(s => s.name !== streamerName) }])
         return message.discord.reply('removed streamer from announcer.')
       } else return false
     }
@@ -168,14 +177,14 @@ const commands = [
   new Command({
     commandNames: ['ch', 'chn', 'channel'],
     helpText: (message) => {
-      return `(Example) \`${data.guilds[message.discord.guild.id].prefix || '!'}channel #${message.discord.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first().name}\` or (Example) \`!channel ${message.discord.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first().id}\` (**Required!** Text channel for announcements.)`
+      return `(Example) \`${message.prefix}channel #${message.discord.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first().name}\` or (Example) \`!channel ${message.discord.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first().id}\` (**Required!** Text channel for announcements.)`
     },
     handler: (message) => {
       // Choose which channel to post live announcements in.
       if (message.cmd[1]) {
         const channelID = message.cmd[1].replace(/[^0-9]/g, '')
         if (message.discord.guild.channels.get(channelID) && message.discord.guild.channels.get(channelID).memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')) {
-          saveData([{ guild: message.discord.guild.id, entry: 'announcementChannel', value: channelID }])
+          saveData([{ guild: message.gid, entry: 'announcementChannel', value: channelID }])
           return message.discord.reply('changed announcement channel.')
         } else return message.discord.reply('can not post in that channel. Change permissions, or choose another channel.')
       } else return false
@@ -184,19 +193,19 @@ const commands = [
   new Command({
     commandNames: ['op', 'operator'],
     helpText: (message) => {
-      return `(Example) \`${data.guilds[message.discord.guild.id].prefix || '!'}operator <@${message.discord.author.id}>\` (Toggle operator)`
+      return `(Example) \`${message.prefix}operator <@${message.discord.author.id}>\` (Toggle operator)`
     },
     handler: (message) => {
       if (message.discord.author.id === message.discord.guild.owner.id) {
         if (message.cmd[1]) {
           const operator = message.cmd[1].replace(/[^0-9]/g, '')
           let added = true
-          if (data.guilds[message.discord.guild.id].operator && data.guilds[message.discord.guild.id].operator.includes(operator)) {
+          if (data.guilds[message.gid].operator && data.guilds[message.gid].operator.includes(operator)) {
             added = false
-            saveData([{ guild: message.discord.guild.id, entry: 'operator', action: 'splice', value: [data.guilds[message.discord.guild.id].operator.indexOf(operator), 1] }])
+            saveData([{ guild: message.gid, entry: 'operator', action: 'splice', value: [data.guilds[message.gid].operator.indexOf(operator), 1] }])
           } else {
-            if (!data.guilds[message.discord.guild.id].operator) saveData([{ guild: message.discord.guild.id, entry: 'operator', value: [] }])
-            saveData([{ guild: message.discord.guild.id, entry: 'operator', action: 'push', value: operator }])
+            if (!data.guilds[message.gid].operator) saveData([{ guild: message.gid, entry: 'operator', value: [] }])
+            saveData([{ guild: message.gid, entry: 'operator', action: 'push', value: operator }])
           }
           return message.discord.reply(`${added ? 'added' : 'removed'} operator.`)
         } else return false
@@ -206,7 +215,7 @@ const commands = [
   new Command({
     commandNames: ['react', 'reaction'],
     helpText: (message) => {
-      return `(Example) \`${data.guilds[message.discord.guild.id].prefix || '!'}reaction 👍\` (Toggles a reaction on the announcement message.)`
+      return `(Example) \`${message.prefix}reaction 👍\` (Toggles a reaction on the announcement message.)`
     },
     handler: (message) => {
       if (message.cmd[1]) {
@@ -215,11 +224,11 @@ const commands = [
           emoji = message.cmd[1].split(':')[2].replace(/[^0-9]/g, '')
         } else emoji = message.cmd[1]
         let added = true
-        if (data.guilds[message.discord.guild.id].reactions.includes(emoji)) {
+        if (data.guilds[message.gid].reactions.includes(emoji)) {
           added = false
-          saveData([{ guild: message.discord.guild.id, entry: 'reactions', action: 'splice', value: [data.guilds[message.discord.guild.id].reactions.indexOf(emoji), 1] }])
+          saveData([{ guild: message.gid, entry: 'reactions', action: 'splice', value: [data.guilds[message.gid].reactions.indexOf(emoji), 1] }])
         } else {
-          saveData([{ guild: message.discord.guild.id, entry: 'reactions', action: 'push', value: emoji }])
+          saveData([{ guild: message.gid, entry: 'reactions', action: 'push', value: emoji }])
         }
         return message.discord.reply(`${added ? 'added' : 'removed'} reaction.`)
       } else return false
@@ -228,28 +237,28 @@ const commands = [
   new Command({
     commandNames: ['tz', 'timezone'],
     helpText: (message) => {
-      return `(Example) \`${data.guilds[message.discord.guild.id].prefix || '!'}timezone sv-SE Europe/Stockholm\` (Check __IANA BCP 47 Subtag registry__ <https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry> & __IETF RFC 5646__ <https://tools.ietf.org/html/rfc5646> for locale tags and __IANA Time Zone Database__ <https://www.iana.org/time-zones> & __Wikipedia__ <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones> for timezones.)`
+      return `(Example) \`${message.prefix}timezone sv-SE Europe/Stockholm\` (Check __IANA BCP 47 Subtag registry__ <https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry> & __IETF RFC 5646__ <https://tools.ietf.org/html/rfc5646> for locale tags and __IANA Time Zone Database__ <https://www.iana.org/time-zones> & __Wikipedia__ <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones> for timezones.)`
     },
     handler: (message) => {
       if (message.cmd[1]) {
-        saveData([{ guild: message.discord.guild.id, entry: 'time', value: { locale: message.cmd[1], timeZone: data.guilds[message.discord.guild.id].time.timeZone } }])
+        saveData([{ guild: message.gid, entry: 'time', value: { locale: message.cmd[1], timeZone: data.guilds[message.gid].time.timeZone } }])
         if (message.cmd[2]) {
-          saveData([{ guild: message.discord.guild.id, entry: 'time', value: { locale: data.guilds[message.discord.guild.id].time.timeZone, timeZone: message.cmd[2] } }])
+          saveData([{ guild: message.gid, entry: 'time', value: { locale: data.guilds[message.gid].time.timeZone, timeZone: message.cmd[2] } }])
         }
-        return message.discord.reply(`Time will now be displayed as: ${moment.utc().locale(data.guilds[message.discord.guild.id].time.locale).tz(data.guilds[message.discord.guild.id].time.timeZone).format('LL LTS zz')}`)
+        return message.discord.reply(`Time will now be displayed as: ${moment.utc().locale(data.guilds[message.gid].time.locale).tz(data.guilds[message.gid].time.timeZone).format('LL LTS zz')}`)
       } else return false
     }
   }),
   new Command({
     commandNames: ['msg', 'message'],
     helpText: (message) => {
-      return `(Example) \`${data.guilds[message.discord.guild.id].prefix || '!'}message @everyone %name% **%status%**, with **%game%**:\n*%title%*\` (Change stream announcement message. Supports *%name%* for streamer's name, *%status%* for type of stream (VOD, LIVE, RERUN), *%game%* for game title and *%title%* for stream title.)`
+      return `(Example) \`${message.prefix}message @everyone %name% **%status%**, with **%game%**:\n*%title%*\` (Change stream announcement message. Supports *%name%* for streamer's name, *%status%* for type of stream (VOD, LIVE, RERUN), *%game%* for game title and *%title%* for stream title.)`
     },
     handler: (message) => {
       // Change stream announcement message.
       const cleanedContent = message.cmd.slice(1).join(' ')
       if (cleanedContent.length > 0) {
-        saveData([{ guild: message.discord.guild.id, entry: 'message', value: cleanedContent }])
+        saveData([{ guild: message.gid, entry: 'message', value: cleanedContent }])
         return message.discord.reply('Changed announcement message.')
       } else return false
     }
@@ -257,11 +266,11 @@ const commands = [
   new Command({
     commandNames: ['pfx', 'prefix'],
     helpText: (message) => {
-      return `(Example) \`${data.guilds[message.discord.guild.id].prefix || '!'}prefix !\` (Changes the bot's command prefix.)`
+      return `(Example) \`${message.prefix}prefix !\` (Changes the bot's command prefix.)`
     },
     handler: (message) => {
       if (message.cmd[1]) {
-        saveData([{ guild: message.discord.guild.id, entry: 'prefix', value: message.cmd[1] }])
+        saveData([{ guild: message.gid, entry: 'prefix', value: message.cmd[1] }])
         return message.discord.reply(`Prefix is now \`${message.cmd[1]}\`.`)
       } else return false
     }
@@ -364,25 +373,36 @@ async function check () {
   }
 }
 
-async function sendMessage (guildID, { cachedImage, streamInfo, gameInfo }) {
-  const imageFileName = `${streamInfo.name}_${Date.now()}.jpg`
+const streamPreviewEmbed = (guildID, { imageFileName, streamInfo, gameInfo }) => {
   const embed = new Discord.RichEmbed()
     .setColor(0x6441A4)
     .setTitle(`[${streamInfo.type.toUpperCase()}] ${streamInfo.name}`)
     .setDescription(`**${streamInfo.title}**\n${gameInfo ? gameInfo.name : ''}`)
-    .setImage(`attachment://${imageFileName}`)
     .setFooter(`Stream started ${moment.utc(streamInfo.started).locale(data.guilds[guildID].time.locale).tz(data.guilds[guildID].time.timeZone).format('LL LTS zz')} `, gameInfo ? gameInfo.box_art_url.replace('{width}x{height}', '32x64') : undefined)
     .setURL(`http://www.twitch.tv/${streamInfo.name}`)
+
+  if (imageFileName) embed.setImage(`attachment://${imageFileName}`)
+  return embed
+}
+
+const parseAnnouncementMessage = (guildID, { streamInfo, gameInfo }) => {
+  return data.guilds[guildID].message
+    .replace('%name%', streamInfo.name)
+    .replace('%status%', streamInfo.type.toUpperCase())
+    .replace('%game%', gameInfo.name)
+    .replace('%title%', streamInfo.title)
+}
+
+async function sendMessage (guildID, { cachedImage, streamInfo, gameInfo }) {
+  const imageFileName = `${streamInfo.name}_${Date.now()}.jpg`
+
+  const embed = streamPreviewEmbed(guildID, { imageFileName, streamInfo, gameInfo })
 
   if (client.channels.get(data.guilds[guildID].announcementChannel)) {
     console.log('Announcing', streamInfo.name, 'in', client.channels.get(data.guilds[guildID].announcementChannel).name, 'over at guild', client.guilds.get(guildID).name)
 
     let message
-    const parsedAnnouncementMessage = data.guilds[guildID].message
-      .replace('%name%', streamInfo.name)
-      .replace('%status%', streamInfo.type.toUpperCase())
-      .replace('%game%', gameInfo.name)
-      .replace('%title%', streamInfo.title)
+    const parsedAnnouncementMessage = parseAnnouncementMessage(guildID, { streamInfo, gameInfo })
     try {
       message = await client.channels.get(data.guilds[guildID].announcementChannel).send(`${parsedAnnouncementMessage} http://www.twitch.tv/${streamInfo.name}`, { embed, file: { attachment: cachedImage, name: imageFileName } })
     } catch (err) {
