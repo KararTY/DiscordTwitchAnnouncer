@@ -482,7 +482,8 @@ client.once('ready', async () => {
     const possibleActivities = ['PLAYING', 'STREAMING', 'LISTENING', 'WATCHING']
     await client.user.setActivity(settings.discord.activity[1], { type: possibleActivities.includes(settings.discord.activity[0].toUpperCase()) ? settings.discord.activity[0].toUpperCase() : 'PLAYING' }).then(() => console.log('Activity has been set.')).catch(console.error)
   }
-  await client.user.setStatus(client.user.presence.clientStatus) // 'online' | 'idle' | 'dnd' | 'invisible'
+
+  await client.user.setStatus(client.user.presence.status === 'offline' ? 'online' : client.user.presence.status) // 'online' | 'idle' | 'dnd' | 'invisible'
 
   client.guilds.forEach(guild => {
     if (!data.guilds[guild.id]) {
