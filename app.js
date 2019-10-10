@@ -476,12 +476,13 @@ client.on('guildDelete', guild => {
   }
 })
 
-client.once('ready', () => {
+client.once('ready', async () => {
   console.log('Logged into Discord.')
   if (settings.discord.activity[0].length > 0 && settings.discord.activity[1].length > 0) {
     const possibleActivities = ['PLAYING', 'STREAMING', 'LISTENING', 'WATCHING']
-    client.user.setActivity(settings.discord.activity[1], { type: possibleActivities.includes(settings.discord.activity[0].toUpperCase()) ? settings.discord.activity[0].toUpperCase() : 'PLAYING' }).then(() => console.log('Activity has been set.')).catch(console.error)
+    await client.user.setActivity(settings.discord.activity[1], { type: possibleActivities.includes(settings.discord.activity[0].toUpperCase()) ? settings.discord.activity[0].toUpperCase() : 'PLAYING' }).then(() => console.log('Activity has been set.')).catch(console.error)
   }
+  await client.user.setStatus(client.user.presence.clientStatus) // 'online' | 'idle' | 'dnd' | 'invisible'
 
   client.guilds.forEach(guild => {
     if (!data.guilds[guild.id]) {
