@@ -6,8 +6,8 @@ npm-debug.log*
 # Dependency directories
 node_modules/
 
-# dotenv environment variables file
-.env
+# Vscode files
+.vscode/
 
 # JSON with data for guilds & streams
 data.json

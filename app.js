@@ -21,6 +21,17 @@ if (!fs.existsSync(path.join(__dirname, 'data.json'))) {
 
 let data = require('./data.json')
 
+// https://stackoverflow.com/a/55435856
+function chunks (arr, n) {
+  function * ch (arr, n) {
+    for (let i = 0; i < arr.length; i += n) {
+      yield (arr.slice(i, i + n))
+    }
+  }
+
+  return [...ch(arr, n)]
+}
+
 // [{ guild: id, entry: 'entry', value: 'value'}]
 function saveData (d = [{ guild: '', entry: '', action: '', value: 'any' }]) {
   const dataOnFile = JSON.parse(fs.readFileSync(path.join(__dirname, 'data.json')))
@@ -302,12 +313,20 @@ async function check () {
     return console.log('No Twitch channels. Add some!')
   }
   try {
-    const res = await ftch(`https://api.twitch.tv/helix/streams?${[...streamers].map((i, ind) => ind > 0 ? '&user_login=' + i : 'user_login=' + i).join('')}`, { headers }).then(res => { return res.json() })
-    if (res.error) throw res
+    const batches = chunks([...streamers], 100)
+    const resData = []
+    for (let index = 0; index < batches.length; index++) {
+      const batch = batches[index]
+      const request = await ftch(`https://api.twitch.tv/helix/streams?${batch.map((i, ind) => ind > 0 ? '&user_login=' + i : 'user_login=' + i).join('')}`, { headers })
+      const response = await request.json()
+
+      if (response.error) throw response
+      else resData.push(...response.data)
+    }
 
     const streams = []
-    for (let i = 0; i < res.data.length; i++) {
-      const stream = res.data[i]
+    for (let i = 0; i < resData.length; i++) {
+      const stream = resData[i]
       streams.push({
         name: stream.user_name.replace(/ /g, ''),
         gameID: stream.game_id,
@@ -322,8 +341,13 @@ async function check () {
     const promise = []
     const cachedImages = {}
     if (streams.length > 0) {
-      const games = streams.filter(s => s.gameID).map(s => s.gameID)
-      promise.push(ftch(`https://api.twitch.tv/helix/games?${games.map((i, ind) => ind > 0 ? '&id=' + i : 'id=' + i).join('')}`, { headers }).then(res => res.json()))
+      const games = [...new Set(streams.filter(s => s.gameID).map(s => s.gameID))]
+      const gamesChunk = chunks(games, 100)
+      for (let index = 0; index < gamesChunk.length; index++) {
+        const batch = gamesChunk[index]
+        promise.push(ftch(`https://api.twitch.tv/helix/games?${batch.map((i, ind) => ind > 0 ? '&id=' + i : 'id=' + i).join('')}`, { headers }).then(res => res.json()))
+      }
+
       for (let index = 0; index < streams.length; index++) {
         const s = streams[index]
         const imageName = s.thumbnail
@@ -336,28 +360,31 @@ async function check () {
     const announcements = []
     for (let index = 0; index < guildIDs.length; index++) {
       const guildID = guildIDs[index]
-      for (let i = 0; i < cache[guildID].length; i++) {
-        if (streams.map(s => s.name.toLowerCase()).includes(cache[guildID][i].name ? cache[guildID][i].name.toLowerCase() : '')) {
+      if (data.guilds[guildID].announcementChannel) {
+        for (let i = 0; i < cache[guildID].length; i++) {
+          if (streams.map(s => s.name.toLowerCase()).includes(cache[guildID][i].name ? cache[guildID][i].name.toLowerCase() : '')) {
           // Make sure they've not already been announced.
-          if (!cache[guildID][i].streaming && new Date(streams[streams.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())].started).getTime() > new Date(data.guilds[guildID].streamers[data.guilds[guildID].streamers.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())].lastStartedAt || 0).getTime()) {
-            // Push info.
-            const streamInfo = streams[streams.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())]
-            const gameInfo = (streamedGames[0] && streamedGames[0].data) ? streamedGames[0].data[streamedGames[0].data.findIndex(g => g.id === streamInfo.gameID)] : undefined
+            if (!cache[guildID][i].streaming && new Date(streams[streams.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())].started).getTime() > new Date(data.guilds[guildID].streamers[data.guilds[guildID].streamers.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())].lastStartedAt || 0).getTime()) {
+              // Push info.
+              const streamInfo = streams[streams.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())]
+              const gameInfo = (streamedGames[0] && streamedGames[0].data) ? streamedGames[0].data[streamedGames[0].data.findIndex(g => g.id === streamInfo.gameID)] : undefined
 
-            cache[guildID][i] = streamInfo
-            cache[guildID][i].game = gameInfo
-            cache[guildID][i].streaming = true
+              cache[guildID][i] = streamInfo
+              cache[guildID][i].game = gameInfo
+              cache[guildID][i].streaming = true
 
-            data.guilds[guildID].streamers[i].lastStartedAt = cache[guildID][i].started
-            saveData([{ guild: guildID, entry: 'streamers', value: data.guilds[guildID].streamers }])
+              data.guilds[guildID].streamers[i].lastStartedAt = cache[guildID][i].started
+              saveData([{ guild: guildID, entry: 'streamers', value: data.guilds[guildID].streamers }])
 
-            if (data.guilds[guildID].announcementChannel) announcements.push(sendMessage(guildID, { cachedImage: cachedImages[cache[guildID][i].thumbnail], streamInfo, gameInfo })) // Send announcement.
-            else console.log('Not announcing. No announcement channel set for guild', client.guilds.get(guildID).name)
-          }
-        } else cache[guildID][i].streaming = false // Not live.
-      }
+              announcements.push(sendMessage(guildID, { cachedImage: cachedImages[cache[guildID][i].thumbnail], streamInfo, gameInfo })) // Batch announcements.
+            }
+          } else cache[guildID][i].streaming = false // Not live.
+        }
+      } else console.log('Not announcing. No announcement channel set for guild', client.guilds.get(guildID).name)
     }
-    await Promise.all(announcements)
+
+    await Promise.all(announcements) // Send announcements.
+
     if (announcements.length > 0) console.log('Successfully announced all streams.')
     setTimeout(check, typeof settings.timer === 'number' ? settings.timer : 61000)
   } catch (e) {
@@ -389,7 +416,7 @@ const parseAnnouncementMessage = (guildID, { streamInfo, gameInfo }) => {
   return data.guilds[guildID].message
     .replace('%name%', streamInfo.name)
     .replace('%status%', streamInfo.type.toUpperCase())
-    .replace('%game%', gameInfo.name)
+    .replace('%game%', gameInfo ? gameInfo.name : 'unknown game')
     .replace('%title%', streamInfo.title)
 }
 
