@@ -364,10 +364,13 @@ async function check () {
         for (let i = 0; i < cache[guildID].length; i++) {
           if (streams.map(s => s.name.toLowerCase()).includes(cache[guildID][i].name ? cache[guildID][i].name.toLowerCase() : '')) {
           // Make sure they've not already been announced.
-            if (!cache[guildID][i].streaming && new Date(streams[streams.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())].started).getTime() > new Date(data.guilds[guildID].streamers[data.guilds[guildID].streamers.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())].lastStartedAt || 0).getTime()) {
+            const isStreaming = cache[guildID][i].streaming
+            const started = streams.find(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase()).started
+            const lastStartedAt = data.guilds[guildID].streamers.find(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase()).lastStartedAt
+            if (!isStreaming && new Date(started).getTime() > new Date(lastStartedAt || 0).getTime()) {
               // Push info.
-              const streamInfo = streams[streams.findIndex(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())]
-              const gameInfo = (streamedGames[0] && streamedGames[0].data) ? streamedGames[0].data[streamedGames[0].data.findIndex(g => g.id === streamInfo.gameID)] : undefined
+              const streamInfo = streams.find(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())
+              const gameInfo = (streamedGames[0] && streamedGames[0].data) ? streamedGames[0].data.find(g => g.id === streamInfo.gameID) : undefined
 
               cache[guildID][i] = streamInfo
               cache[guildID][i].game = gameInfo
@@ -426,8 +429,6 @@ async function sendMessage (guildID, { cachedImage, streamInfo, gameInfo }) {
   const embed = streamPreviewEmbed(guildID, { imageFileName, streamInfo, gameInfo })
 
   if (client.channels.get(data.guilds[guildID].announcementChannel)) {
-    console.log('Announcing', streamInfo.name, 'in', client.channels.get(data.guilds[guildID].announcementChannel).name, 'over at guild', client.guilds.get(guildID).name)
-
     let message
     const parsedAnnouncementMessage = parseAnnouncementMessage(guildID, { streamInfo, gameInfo })
     try {
