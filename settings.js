@@ -1,7 +1,8 @@
 module.exports = {
   timer: 61000, // Is in milliseconds. Default: 61000 ms = 1 minute & 1 second.
   twitch: {
-    clientID: '' // Make a Twitch application at https://glass.twitch.tv/console/apps
+    clientID: '', // Make a Twitch application at
+    clientSecret: '' // https://dev.twitch.tv/console/apps
   },
   discord: {
     defaultPrefix: '!',

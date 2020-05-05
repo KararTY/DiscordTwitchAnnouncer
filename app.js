@@ -1,6 +1,6 @@
 const settings = require('./settings.js')
 const Discord = require('discord.js')
-const ftch = require('node-fetch')
+const fetch = require('node-fetch')
 const fs = require('fs')
 const path = require('path')
 const moment = require('moment-timezone')
@@ -8,16 +8,17 @@ const client = new Discord.Client()
 
 if (!settings.discord.token) throw new Error('No discord authentication token has been provided.')
 if (!settings.twitch.clientID) throw new Error('No Twitch client ID token has been provided.')
-
-const headers = new ftch.Headers({
-  'Client-ID': settings.twitch.clientID
-})
+if (!settings.twitch.clientSecret) {
+  console.log("If you're updating from a previous version, please make sure field 'twitch.clientSecret' exists in settings.js.")
+  throw new Error('No Twitch client secret has been provided.')
+}
 
 // Create data.json if it doesn't exist.
 if (!fs.existsSync(path.join(__dirname, 'data.json'))) {
   fs.writeFileSync(path.join(__dirname, 'data.json'), JSON.stringify({ guilds: {} }, null, 2))
   console.log('Created data.json')
 }
+const tokenFilePath = path.join(__dirname, 'token.json')
 
 let data = require('./data.json')
 
@@ -64,11 +65,7 @@ function saveData (d = [{ guild: '', entry: '', action: '', value: 'any' }]) {
 }
 
 const cache = {}
-
-let disconnect = false
-
 const initialization = new Date()
-
 const defaultGuildData = {
   streamers: [],
   announcementChannel: null,
@@ -76,6 +73,69 @@ const defaultGuildData = {
   message: '@everyone %name% **%status%**!',
   time: { locale: Intl.DateTimeFormat().resolvedOptions().locale, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
   prefix: '!'
+}
+
+let disconnect = false
+let headers = new fetch.Headers({})
+let tokenExpirationDate
+
+async function refreshAppToken () {
+  let tokenJSON
+
+  if (typeof tokenExpirationDate !== 'number' && fs.existsSync(tokenFilePath)) {
+    try {
+      tokenJSON = JSON.parse(fs.readFileSync(tokenFilePath))
+      tokenExpirationDate = tokenJSON.expiration
+
+      console.log(`Using existing token. Token expires on ${new Date(tokenJSON.expiration).toUTCString()}.`)
+      headers = new fetch.Headers({
+        Authorization: `Bearer ${tokenJSON.superSecret}`
+      })
+
+      // Validate token
+      try {
+        const res = await fetch('https://id.twitch.tv/oauth2/validate', {
+          headers: new fetch.Headers({
+            Authorization: `OAuth ${tokenJSON.superSecret}`
+          })
+        }).then(res => res.json())
+
+        if (!res.client_id) throw new Error()
+      } catch (err) {
+        // Invalid token, response should've been JSON.
+        console.log('Invalid token, refreshing token!')
+        tokenExpirationDate = 0
+      }
+    } catch (e) {
+      tokenExpirationDate = Date.now() - 1
+    }
+  }
+
+  if (Date.now() >= (tokenExpirationDate || 0)) {
+    try {
+      const res = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${settings.twitch.clientID}&client_secret=${settings.twitch.clientSecret}&grant_type=client_credentials`, { method: 'POST' }).then(res => res.json())
+
+      const expirationDate = Date.now() + (res.expires_in * 1000)
+
+      headers = new fetch.Headers({
+        Authorization: `Bearer ${res.access_token}`
+      })
+
+      console.log('Wrote token to disk. NOTE: DO NOT SHARE token.json WITH ANYONE.')
+      fs.writeFileSync(tokenFilePath, JSON.stringify({
+        expiration: expirationDate,
+        superSecret: res.access_token
+      }))
+
+      tokenExpirationDate = expirationDate
+    } catch (err) {
+      console.error('Something went wrong trying to get Twitch OAuth token, verify your client id & secret in settings.js')
+      console.error(err)
+      return false
+    }
+  }
+
+  return true
 }
 
 class Message {
@@ -112,7 +172,7 @@ const commands = [
         return message.discord.reply(typeof command.helpText === 'function' ? command.helpText(message) : command.helpText)
       } else {
         try {
-          const embed = new Discord.RichEmbed()
+          const embed = new Discord.MessageEmbed()
             .setTitle('Available commands')
           for (let index = 0; index < commands.length; index++) {
             const cmd = commands[index]
@@ -188,13 +248,13 @@ const commands = [
   new Command({
     commandNames: ['ch', 'chn', 'channel'],
     helpText: (message) => {
-      return `(Example) \`${message.prefix}channel #${message.discord.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first().name}\` or (Example) \`!channel ${message.discord.guild.channels.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first().id}\` (**Required!** Text channel for announcements.)`
+      return `(Example) \`${message.prefix}channel #${message.discord.guild.channels.cache.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first().name}\` or (Example) \`!channel ${message.discord.guild.channels.cache.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first().id}\` (**Required!** Text channel for announcements.)`
     },
     handler: (message) => {
       // Choose which channel to post live announcements in.
       if (message.cmd[1]) {
         const channelID = message.cmd[1].replace(/[^0-9]/g, '')
-        if (message.discord.guild.channels.get(channelID) && message.discord.guild.channels.get(channelID).memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')) {
+        if (message.discord.guild.channels.cache.get(channelID) && message.discord.guild.channels.cache.get(channelID).memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')) {
           saveData([{ guild: message.gid, entry: 'announcementChannel', value: channelID }])
           return message.discord.reply('changed announcement channel.')
         } else return message.discord.reply('can not post in that channel. Change permissions, or choose another channel.')
@@ -296,28 +356,37 @@ async function check () {
     setTimeout(check, 60000)
     return console.error(err)
   }
+
   if (disconnect) {
     setTimeout(check, 3000)
     return console.log('Seems Discord is disconnected. Not checking for Twitch streams. Retrying in 3 seconds...')
   }
+
+  const continueBoolean = await refreshAppToken()
+  if (!continueBoolean) {
+    setTimeout(check, 3000)
+    return
+  }
+
   const streamers = new Set()
 
   const guildIDs = Object.keys(data.guilds)
   for (let i = 0; i < guildIDs.length; i++) {
     const guildID = guildIDs[i]
-    if (client.guilds.find(i => i.id === guildID) && data.guilds[guildID].streamers) data.guilds[guildID].streamers.forEach(stream => streamers.add(stream.name))
+    if (client.guilds.cache.find(i => i.id === guildID) && data.guilds[guildID].streamers) data.guilds[guildID].streamers.forEach(stream => streamers.add(stream.name))
   }
 
   if ([...streamers].length < 1) {
     setTimeout(check, typeof settings.timer === 'number' ? settings.timer + 5000 : 61000)
     return console.log('No Twitch channels. Add some!')
   }
+
   try {
     const batches = chunks([...streamers], 100)
     const resData = []
     for (let index = 0; index < batches.length; index++) {
       const batch = batches[index]
-      const request = await ftch(`https://api.twitch.tv/helix/streams?${batch.map((i, ind) => ind > 0 ? '&user_login=' + i : 'user_login=' + i).join('')}`, { headers })
+      const request = await fetch(`https://api.twitch.tv/helix/streams?${batch.map((i, ind) => ind > 0 ? '&user_login=' + i : 'user_login=' + i).join('')}`, { headers })
       const response = await request.json()
 
       if (response.error) throw response
@@ -345,13 +414,13 @@ async function check () {
       const gamesChunk = chunks(games, 100)
       for (let index = 0; index < gamesChunk.length; index++) {
         const batch = gamesChunk[index]
-        promise.push(ftch(`https://api.twitch.tv/helix/games?${batch.map((i, ind) => ind > 0 ? '&id=' + i : 'id=' + i).join('')}`, { headers }).then(res => res.json()))
+        promise.push(fetch(`https://api.twitch.tv/helix/games?${batch.map((i, ind) => ind > 0 ? '&id=' + i : 'id=' + i).join('')}`, { headers }).then(res => res.json()))
       }
 
       for (let index = 0; index < streams.length; index++) {
         const s = streams[index]
         const imageName = s.thumbnail
-        const res = await ftch(s.thumbnail).then(res => res.buffer())
+        const res = await fetch(s.thumbnail).then(res => res.buffer())
         cachedImages[imageName] = res
       }
     }
@@ -383,7 +452,7 @@ async function check () {
             }
           } else cache[guildID][i].streaming = false // Not live.
         }
-      } else console.log('Not announcing. No announcement channel set for guild', client.guilds.get(guildID).name)
+      } else console.log('Not announcing. No announcement channel set for guild', client.guilds.cache.get(guildID).name)
     }
 
     await Promise.all(announcements) // Send announcements.
@@ -404,7 +473,7 @@ async function check () {
 }
 
 const streamPreviewEmbed = (guildID, { imageFileName, streamInfo, gameInfo }) => {
-  const embed = new Discord.RichEmbed()
+  const embed = new Discord.MessageEmbed()
     .setColor(0x6441A4)
     .setTitle(`[${streamInfo.type.toUpperCase()}] ${streamInfo.name}`)
     .setDescription(`**${streamInfo.title}**\n${gameInfo ? gameInfo.name : ''}`)
@@ -428,15 +497,17 @@ async function sendMessage (guildID, { cachedImage, streamInfo, gameInfo }) {
 
   const embed = streamPreviewEmbed(guildID, { imageFileName, streamInfo, gameInfo })
 
-  if (client.channels.get(data.guilds[guildID].announcementChannel)) {
+  if (client.channels.cache.get(data.guilds[guildID].announcementChannel)) {
     let message
     const parsedAnnouncementMessage = parseAnnouncementMessage(guildID, { streamInfo, gameInfo })
     try {
-      message = await client.channels.get(data.guilds[guildID].announcementChannel).send(`${parsedAnnouncementMessage} http://www.twitch.tv/${streamInfo.name}`, { embed, file: { attachment: cachedImage, name: imageFileName } })
+      message = await client.channels.cache.get(data.guilds[guildID].announcementChannel).send(`${parsedAnnouncementMessage} http://www.twitch.tv/${streamInfo.name}`, {
+        embed, files: [{ attachment: cachedImage, name: imageFileName }]
+      })
     } catch (err) {
-      console.error(err.name, err.message, err.code, `in guild ${client.guilds.get(guildID).name}`)
+      console.error(err.name, err.message, err.code, `in guild ${client.guilds.cache.get(guildID).name}`)
       if (err.message === 'Missing Permissions') {
-        message = await client.channels.get(data.guilds[guildID].announcementChannel).send(`${parsedAnnouncementMessage} http://www.twitch.tv/${streamInfo.name}`)
+        message = await client.channels.cache.get(data.guilds[guildID].announcementChannel).send(`${parsedAnnouncementMessage} http://www.twitch.tv/${streamInfo.name}`)
       }
     }
 
@@ -447,13 +518,13 @@ async function sendMessage (guildID, { cachedImage, streamInfo, gameInfo }) {
           if (Number.isInteger(Number(emoji))) await message.react(message.guild.emojis.get(emoji))
           else await message.react(emoji)
         } catch (err) {
-          console.error(err.name, err.message, err.code, `in guild ${client.guilds.get(guildID).name}`)
+          console.error(err.name, err.message, err.code, `in guild ${client.guilds.cache.get(guildID).name}`)
         }
       }
     }
 
-    console.log('Announced', streamInfo.name, 'in', client.channels.get(data.guilds[guildID].announcementChannel).name, 'over at guild', client.guilds.get(guildID).name)
-  } else console.log('Could not announce. Announcement channel,', data.guilds[guildID].announcementChannel, 'does not exist over at guild', client.guilds.get(guildID).name)
+    console.log('Announced', streamInfo.name, 'in', client.channels.cache.get(data.guilds[guildID].announcementChannel).name, 'over at guild', client.guilds.cache.get(guildID).name)
+  } else console.log('Could not announce. Announcement channel,', data.guilds[guildID].announcementChannel, 'does not exist over at guild', client.guilds.cache.get(guildID).name)
 
   return Promise.resolve()
 }
@@ -513,7 +584,7 @@ client.once('ready', async () => {
 
   await client.user.setStatus(client.user.presence.status === 'offline' ? 'online' : client.user.presence.status) // 'online' | 'idle' | 'dnd' | 'invisible'
 
-  client.guilds.forEach(guild => {
+  client.guilds.cache.forEach(guild => {
     if (!data.guilds[guild.id]) {
       saveData([{ guild: guild.id, action: 'addGuild' }])
     } else {
@@ -535,6 +606,7 @@ client.once('ready', async () => {
       cache[guildID].push({ name: streamer.name, streaming: false })
     }
   }
+
   // Starter
   setTimeout(check, typeof settings.timer === 'number' ? settings.timer : 61000)
 })
