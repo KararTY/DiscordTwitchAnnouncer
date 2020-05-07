@@ -89,7 +89,8 @@ async function refreshAppToken () {
 
       console.log(`Using existing token. Token expires on ${new Date(tokenJSON.expiration).toUTCString()}.`)
       headers = new fetch.Headers({
-        Authorization: `Bearer ${tokenJSON.superSecret}`
+        Authorization: `Bearer ${tokenJSON.superSecret}`,
+        'Client-ID': settings.twitch.clientID
       })
 
       // Validate token
@@ -118,7 +119,8 @@ async function refreshAppToken () {
       const expirationDate = Date.now() + (res.expires_in * 1000)
 
       headers = new fetch.Headers({
-        Authorization: `Bearer ${res.access_token}`
+        Authorization: `Bearer ${res.access_token}`,
+        'Client-ID': settings.twitch.clientID
       })
 
       console.log('Wrote token to disk. NOTE: DO NOT SHARE token.json WITH ANYONE.')
