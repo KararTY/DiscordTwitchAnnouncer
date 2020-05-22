@@ -21,5 +21,5 @@ module.exports = {
 
 /**
  * Example invite link for bot
- * https://discordapp.com/oauth2/authorize?&client_id=<clientid from Discord>&scope=bot&permissions=0
+ * https://discordapp.com/oauth2/authorize?client_id=<clientid from Discord>&scope=bot&permissions=0
  */

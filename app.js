@@ -101,7 +101,7 @@ async function refreshAppToken () {
           })
         }).then(res => res.json())
 
-        if (!res.client_id) throw new Error()
+        if (res.client_id !== settings.twitch.clientID) throw new Error()
       } catch (err) {
         // Invalid token, response should've been JSON.
         console.log('Invalid token, refreshing token!')
@@ -454,7 +454,7 @@ async function check () {
             }
           } else cache[guildID][i].streaming = false // Not live.
         }
-      } else console.log('Not announcing. No announcement channel set for guild', client.guilds.cache.get(guildID).name)
+      } // else console.log('Not announcing. No announcement channel set for guild', client.guilds.cache.get(guildID).name) Too verbose.
     }
 
     await Promise.all(announcements) // Send announcements.
