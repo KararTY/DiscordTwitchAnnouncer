@@ -15,6 +15,7 @@
 ```js
 module.exports = {
   timer: 61000, // Is in milliseconds. Default: 61000 ms = 1 minute & 1 second.
+  language: 'english', // Default language 'english'. Other languages available in `i18n` folder.
   twitch: {
     clientID: '', // Make a Twitch application at
     clientSecret: '' // https://dev.twitch.tv/console/apps

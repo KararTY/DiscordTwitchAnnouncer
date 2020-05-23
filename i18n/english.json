@@ -1,0 +1,96 @@
+{
+  "noDiscordToken": "No discord authentication token has been provided.",
+  "noTwitchClientID": "No Twitch client ID token has been provided.",
+  "includeTwitchClientSecret": "If you're updating from a previous version, please make sure field 'twitch.clientSecret' exists in settings.js.",
+  "noTwitchClientSecret": "No Twitch client secret has been provided.",
+  "createdDataJSON": "Created data.json.",
+  "usingExistingToken": "Using existing token. Token expires on %s.",
+  "missmatchToken": "Client ID missmatched with Twitch token secret, refreshing token!",
+  "invalidTokenResponse": "Invalid response, refreshing token!",
+  "wroteTokenToDisk": "Wrote token to disk. NOTE: DO NOT SHARE token.json WITH ANYONE.",
+  "genericTokenError": "Something went wrong trying to get Twitch OAuth token, verify your client id & secret in settings.js!",
+  "genericDataJSONErrorRetry": "Something is up with your data.json file! Retrying in 1 minute...",
+  "disconnectedDiscord": "Seems Discord is disconnected. Not checking for Twitch streams. Retrying in 3 seconds...",
+  "noTwitchChannels": "No Twitch channels. Add some!",
+  "announcedStreams": "Successfully announced all streams.",
+  "throttledByTwitch": "Throttled by Twitch! Increase timer in settings.js and restart!",
+  "twitchThrottleMessage": "\nTwitch throttle message: %s",
+  "streamStarted": "Stream started ",
+  "unknownGame": "unknown game",
+  "inGuild": "in guild ",
+  "announcedInOverAtGuild": "Announced %s in %s over at guild %s",
+  "announcementChannelDoesNotExist": "Could not announce. Announcement channel, %s does not exist over at guild %s",
+  "addedGuild": "Added guild to list!",
+  "removedGuild": "Removed a guild from list!",
+  "loggedIntoDiscord": "Logged into Discord.",
+  "activityHasBeenSet": "Activity has been set.",
+  "reconnectingToDiscord": "Reconnecting to Discord...",
+  "reconnectedToDiscord": "Reconnected to Discord. All functional.",
+  "commands": {
+    "help": {
+      "triggers": ["help", "h"],
+      "helpText": "`%1help <command>` (Replace <command> with a command to get help with a specific command.)",
+      "availableCommands": "Available commands",
+      "message": "**Help commands:** "
+    },
+    "uptime": {
+      "triggers": ["uptime", "timeup", "online"],
+      "helpText": "`%1uptime` (Shows bot uptime.)",
+      "message": "Been online for",
+      "hoursComma": "hours,",
+      "minutesAnd": "minutes and",
+      "seconds": "seconds",
+      "onlineSince": "Online since"
+    },
+    "add": {
+      "triggers": ["add", "+"],
+      "helpText": "%1 `%2add Streamer_Name` (Adds a Twitch stream to the announcer.)",
+      "gameInfoName": "(DEMO) Game name goes here",
+      "streamInfoTitle": "(DEMO) Stream title goes here",
+      "alreadyExists": "already exists!",
+      "message": "added streamer to announcer.",
+      "addAnnouncementChannel": "Don't forget to add announcement channel with `!channel #channelName`."
+    },
+    "remove": {
+      "triggers": ["rem", "remove", "-", "del", "delete"],
+      "helpText": "%1 `%2remove Streamer_Name` (Removes a Twitch stream from the announcer.)",
+      "doesNotExist": "doesn't exist!",
+      "message": "removed streamer from announcer."
+    },
+    "channel": {
+      "triggers": ["ch", "chn", "channel"],
+      "helpText": "%1 `%2channel #%3` or %1 `!channel %4` (**Required!** Text channel for announcements.)",
+      "message": "changed announcement channel.",
+      "noPermissionsForChannel": "can not post in that channel. Change permissions, or choose another channel."
+    },
+    "operator": {
+      "triggers": ["op", "operator"],
+      "helpText": "%1 `%2operator <@%3>` (Toggle operator.)",
+      "message": "%1 operator.",
+      "noPermission": "Only guild owner can add and remove operators."
+    },
+    "reaction": {
+      "triggers": ["react", "reaction"],
+      "helpText": "%1 `%2reaction 👍` (Toggles a reaction on the announcement message.)",
+      "message": "%1 reaction."
+    },
+    "timezone": {
+      "triggers": ["tz", "timezone"],
+      "helpText": "%1 `%2timezone sv-SE Europe/Stockholm` (Check __IANA BCP 47 Subtag registry__ <https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry> & __IETF RFC 5646__ <https://tools.ietf.org/html/rfc5646> for locale tags and __IANA Time Zone Database__ <https://www.iana.org/time-zones> & __Wikipedia__ <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones> for timezones.)",
+      "message": "Time will now be displayed as: %1"
+    },
+    "message": {
+      "triggers": ["msg", "message"],
+      "helpText": "%1 `%2message @everyone %name% **%status%**, with **%game%**:\n*%title%*` (Change stream announcement message. Supports *%name%* for streamer's name, *%status%* for type of stream (VOD, LIVE, RERUN), *%game%* for game title and *%title%* for stream title.)",
+      "message": "Changed announcement message."
+    },
+    "prefix": {
+      "triggers": ["pfx", "prefix"],
+      "helpText": "%1 `%2prefix !` (Changes the bot's command prefix.)",
+      "message": "Prefix is now `%1`."
+    }
+  },
+  "example": "(Example)",
+  "added": "added",
+  "removed": "removed"
+}
