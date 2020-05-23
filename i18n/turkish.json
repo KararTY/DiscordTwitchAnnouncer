@@ -53,7 +53,7 @@
     },
     "remove": {
       "triggers": ["kal", "kaldır", "-", "sil"],
-      "helpText": "%1 `%2remove Streamer_Name` (Bir Twitch yayıncısını duyurudan kaldırır.)",
+      "helpText": "%1 `%2kaldır Yayıncı_Adı` (Bir Twitch yayıncısını duyurudan kaldırır.)",
       "doesNotExist": "Üzgünüm, bu yayıncı zaten mevcut değil!",
       "message": "Başarılı, yayıncı duyurudan kaldırıldı."
     },
