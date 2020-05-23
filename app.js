@@ -331,7 +331,7 @@ const commands = (translate) => [
     }
   }),
   new Command({
-    commandNames: ['react', 'reaction'],
+    commandNames: translate.commands.reaction.triggers,
     helpText: (message) => {
       return translate.commands.reaction.helpText
         .replace('%1', translate.example)
@@ -355,7 +355,7 @@ const commands = (translate) => [
     }
   }),
   new Command({
-    commandNames: ['tz', 'timezone'],
+    commandNames: translate.commands.timezone.triggers,
     helpText: (message) => {
       return translate.commands.timezone.helpText
         .replace('%1', translate.example)
@@ -372,7 +372,7 @@ const commands = (translate) => [
     }
   }),
   new Command({
-    commandNames: ['msg', 'message'],
+    commandNames: translate.commands.message.triggers,
     helpText: (message) => {
       return translate.commands.message.helpText
         .replace('%1', translate.example)
@@ -388,7 +388,7 @@ const commands = (translate) => [
     }
   }),
   new Command({
-    commandNames: ['pfx', 'prefix'],
+    commandNames: translate.commands.prefix.triggers,
     helpText: (message) => {
       return translate.commands.prefix.helpText
         .replace('%1', translate.example)
@@ -402,7 +402,7 @@ const commands = (translate) => [
     }
   }),
   new Command({
-    commandNames: ['language', 'lang'],
+    commandNames: translate.commands.language.triggers,
     helpText: (message) => {
       return translate.commands.language.helpText
         .replace('%1', translate.example)
