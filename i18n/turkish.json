@@ -87,13 +87,13 @@
     "prefix": {
       "triggers": ["pfx", "prefix","önek","ünvan"],
       "helpText": "%1 `%2önek !` (Bot'un komut önekini değiştirir.)",
-      "message": "Başarılı prefix değiştirildi. Prefixiniz: `%1`."
+      "message": "Başarılı, prefix değiştirildi. Prefixiniz: `%1`."
      },
     "language": {
       "triggers": ["dil", "diller"],
       "helpText": "%1 `%2dil turkish` (Botun dilini değiştirir.)\n**Mevcut diller:** %3",
       "languageDoesNotExit": "Üzgünüm, bu dil mevcut değil!\n**Mevcut diller:** %1",
-      "message": "Başarılı dil değiştirildi: `%1`!"
+      "message": "Başarılı, dil değiştirildi: `%1`!"
     }
   },
   "example": "(ÖRNEK)",
