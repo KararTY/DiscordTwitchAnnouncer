@@ -460,7 +460,7 @@ async function check () {
 
       streams.push({
         name: stream.user_name.replace(/ /g, ''),
-        avatar: user.logo,
+        avatar: user ? user.logo : null,
         gameID: stream.game_id,
         thumbnail: stream.thumbnail_url.replace('{width}x{height}', '1280x720'),
         type: stream.type,
@@ -542,8 +542,8 @@ const streamPreviewEmbed = (guildID, { imageFileName, streamInfo, gameInfo }) =>
     .setDescription(`**${streamInfo.title}**\n${gameInfo ? gameInfo.name : ''}`)
     .setFooter(translate.streamStarted.concat(moment.utc(streamInfo.started).locale(data.guilds[guildID].time.locale).tz(data.guilds[guildID].time.timeZone).format('LL LTS zz')), gameInfo ? gameInfo.box_art_url.replace('{width}x{height}', '32x64') : undefined)
     .setURL(`http://www.twitch.tv/${streamInfo.name}`)
-    .setThumbnail(streamInfo.avatar)
 
+  if (streamInfo.avatar) embed.setThumbnail(streamInfo.avatar)
   if (imageFileName) embed.setImage(`attachment://${imageFileName}`)
   return embed
 }
