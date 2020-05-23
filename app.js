@@ -451,8 +451,16 @@ async function check () {
     const streams = []
     for (let i = 0; i < resData.length; i++) {
       const stream = resData[i]
+
+      // Deprecated API usage!
+      let user = await fetch(`https://api.twitch.tv/kraken/users/${stream.user_id}`, { headers: new fetch.Headers({ Accept: 'application/vnd.twitchtv.v5+json', 'Client-ID': settings.twitch.clientID }) })
+
+      if (user.error) console.error(user.error)
+      else user = await user.json()
+
       streams.push({
         name: stream.user_name.replace(/ /g, ''),
+        avatar: user.logo,
         gameID: stream.game_id,
         thumbnail: stream.thumbnail_url.replace('{width}x{height}', '1280x720'),
         type: stream.type,
@@ -534,6 +542,7 @@ const streamPreviewEmbed = (guildID, { imageFileName, streamInfo, gameInfo }) =>
     .setDescription(`**${streamInfo.title}**\n${gameInfo ? gameInfo.name : ''}`)
     .setFooter(translate.streamStarted.concat(moment.utc(streamInfo.started).locale(data.guilds[guildID].time.locale).tz(data.guilds[guildID].time.timeZone).format('LL LTS zz')), gameInfo ? gameInfo.box_art_url.replace('{width}x{height}', '32x64') : undefined)
     .setURL(`http://www.twitch.tv/${streamInfo.name}`)
+    .setThumbnail(streamInfo.avatar)
 
   if (imageFileName) embed.setImage(`attachment://${imageFileName}`)
   return embed
