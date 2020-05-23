@@ -58,6 +58,7 @@ Available commands:
   * `%game%` Game name
   * `%title%` Stream title
 * (Example) `!prefix #`
+* (Example) `!language english` Check i18n folder for available languages.
 
 ### Contributing
 Fork project & Send a pull request. Use eslint, thanks.
