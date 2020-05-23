@@ -47,6 +47,7 @@
       "helpText": "%1 `%2add Streamer_Name` (Adds a Twitch stream to the announcer.)",
       "gameInfoName": "(DEMO) Game name goes here",
       "streamInfoTitle": "(DEMO) Stream title goes here",
+      "streamInfoType": "(DEMO) LIVE/VOD/RERUN...",
       "alreadyExists": "already exists!",
       "message": "added streamer to announcer.",
       "addAnnouncementChannel": "Don't forget to add announcement channel with `!channel #channelName`."

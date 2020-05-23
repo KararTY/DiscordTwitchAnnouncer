@@ -15,7 +15,7 @@
   "announcedStreams": "Tüm yayınlar başarıyla duyuruldu.",
   "throttledByTwitch": "Twitch tarafından boğuldu! Settings.js'de zamanlayıcıyı artırın ve yeniden başlatın!",
   "twitchThrottleMessage": "\nTwitch boğma mesajı: %s",
-  "streamStarted": "Yayın Başladı",
+  "streamStarted": "Yayın Başladı ",
   "unknownGame": "Bilinmeyen oyun",
   "inGuild": "sunucuda",
   "announcedInOverAtGuild": "%s sunucusunda %s kanalında %s 'yı duyurdu'",

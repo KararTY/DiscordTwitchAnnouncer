@@ -91,6 +91,30 @@ let disconnect = false
 let headers = new fetch.Headers({})
 let tokenExpirationDate
 
+// Prototypal. Good for now.
+function translateDefault (language) {
+  const result = {}
+  const lang = translations[language]
+  const english = translate
+
+  Object.keys(english).forEach(i => {
+    result[i] = JSON.parse(JSON.stringify(english[i]))
+    if (lang[i]) result[i] = JSON.parse(JSON.stringify(lang[i]))
+  })
+
+  Object.keys(english.commands).forEach(i => {
+    result.commands[i] = JSON.parse(JSON.stringify(english.commands[i]))
+    if (lang.commands[i]) result.commands[i] = JSON.parse(JSON.stringify(lang.commands[i]))
+
+    Object.keys(english.commands[i]).forEach(ii => {
+      result.commands[i][ii] = JSON.parse(JSON.stringify(english.commands[i][ii]))
+      if (lang.commands[i][ii]) result.commands[i][ii] = JSON.parse(JSON.stringify(lang.commands[i][ii]))
+    })
+  })
+
+  return result
+}
+
 async function refreshAppToken () {
   let tokenJSON
 
@@ -245,7 +269,8 @@ const commands = (translate) => [
           },
           streamInfo: {
             name: 'twitchdev',
-            type: '(DEMO) LIVE/VOD/RERUN...',
+            avatar: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Twitch_logo_2019.svg/300px-Twitch_logo_2019.svg.png',
+            type: translate.commands.add.streamInfoType,
             title: translate.commands.add.streamInfoTitle
           }
         }
@@ -558,7 +583,7 @@ const streamPreviewEmbed = (guildID, { imageFileName, streamInfo, gameInfo }) =>
     .setColor(0x6441A4)
     .setTitle(`[${streamInfo.type.toUpperCase()}] ${streamInfo.name}`)
     .setDescription(`**${streamInfo.title}**\n${gameInfo ? gameInfo.name : ''}`)
-    .setFooter(translate.streamStarted.concat(moment.utc(streamInfo.started).locale(data.guilds[guildID].time.locale).tz(data.guilds[guildID].time.timeZone).format('LL LTS zz')), gameInfo ? gameInfo.box_art_url.replace('{width}x{height}', '32x64') : undefined)
+    .setFooter(translateDefault(data.guilds[guildID].language).streamStarted.concat(moment.utc(streamInfo.started).locale(data.guilds[guildID].time.locale).tz(data.guilds[guildID].time.timeZone).format('LL LTS zz')), gameInfo ? gameInfo.box_art_url.replace('{width}x{height}', '32x64') : undefined)
     .setURL(`http://www.twitch.tv/${streamInfo.name}`)
 
   if (streamInfo.avatar) embed.setThumbnail(streamInfo.avatar)
@@ -635,14 +660,7 @@ client.on('message', message => {
   if (allow) {
     const cleanedMessage = message.content.replace(new RegExp(`^<@${client.user.id}> `), '!')
     if (message.cleanContent.startsWith(data.guilds[message.guild.id].prefix || '!') || message.mentions.users.find(u => u.id === client.user.id)) {
-      const command = commands({
-        ...translations.english,
-        ...translations[data.guilds[message.guild.id].language],
-        commands: {
-          ...translations.english.commands,
-          ...translations[data.guilds[message.guild.id].language].commands
-        }
-      }).find(command => command.commandNames.indexOf(cleanedMessage.split(/[ ]+/)[0].toLowerCase().substr(data.guilds[message.guild.id].prefix.length)) > -1)
+      const command = commands(translateDefault(data.guilds[message.guild.id].language)).find(command => command.commandNames.indexOf(cleanedMessage.split(/[ ]+/)[0].toLowerCase().substr(data.guilds[message.guild.id].prefix.length)) > -1)
       if (command) command.handler(new Message(message)) || message.reply(command.showHelpText(new Message(message))) // Handle command.
     }
   }
