@@ -400,6 +400,24 @@ const commands = (translate) => [
         return message.discord.reply(translate.commands.prefix.message.replace('%1', message.cmd[1]))
       } else return false
     }
+  }),
+  new Command({
+    commandNames: ['language', 'lang'],
+    helpText: (message) => {
+      return translate.commands.language.helpText
+        .replace('%1', translate.example)
+        .replace('%2', message.prefix)
+        .replace('%3', Object.keys(translations).join(', '))
+    },
+    handler: (message) => {
+      const providedValue = message.cmd[1]
+      if (providedValue) {
+        if (translations[providedValue.toLowerCase()]) {
+          saveData([{ guild: message.gid, entry: 'language', value: message.cmd[1] }])
+          return message.discord.reply(translate.commands.language.message.replace('%1', providedValue.toLowerCase()))
+        } else return message.discord.reply(translate.commands.language.languageDoesNotExit.replace('%1', Object.keys(translations).join(', ')))
+      } else return false
+    }
   })
 ]
 
@@ -617,7 +635,14 @@ client.on('message', message => {
   if (allow) {
     const cleanedMessage = message.content.replace(new RegExp(`^<@${client.user.id}> `), '!')
     if (message.cleanContent.startsWith(data.guilds[message.guild.id].prefix || '!') || message.mentions.users.find(u => u.id === client.user.id)) {
-      const command = commands(translations[data.guilds[message.guild.id].language]).find(command => command.commandNames.indexOf(cleanedMessage.split(/[ ]+/)[0].toLowerCase().substr(data.guilds[message.guild.id].prefix.length)) > -1)
+      const command = commands({
+        ...translations.english,
+        ...translations[data.guilds[message.guild.id].language],
+        commands: {
+          ...translations.english.commands,
+          ...translations[data.guilds[message.guild.id].language].commands
+        }
+      }).find(command => command.commandNames.indexOf(cleanedMessage.split(/[ ]+/)[0].toLowerCase().substr(data.guilds[message.guild.id].prefix.length)) > -1)
       if (command) command.handler(new Message(message)) || message.reply(command.showHelpText(new Message(message))) // Handle command.
     }
   }

@@ -81,13 +81,19 @@
     },
     "message": {
       "triggers": ["msg", "message"],
-      "helpText": "%1 `%2message @everyone %name% **%status%**, with **%game%**:\n*%title%*` (Change stream announcement message. Supports *%name%* for streamer's name, *%status%* for type of stream (VOD, LIVE, RERUN), *%game%* for game title and *%title%* for stream title.)",
+      "helpText": "%1 `%2message @everyone %name% **%status%**, with **%game%**: *%title%*` (Change stream announcement message. Supports *%name%* for streamer's name, *%status%* for type of stream (VOD, LIVE, RERUN), *%game%* for game title and *%title%* for stream title.)",
       "message": "Changed announcement message."
     },
     "prefix": {
       "triggers": ["pfx", "prefix"],
       "helpText": "%1 `%2prefix !` (Changes the bot's command prefix.)",
       "message": "Prefix is now `%1`."
+    },
+    "language": {
+      "triggers": ["lang", "language"],
+      "helpText": "%1 `%2language english` (Changes the bot's language.)\n**Available languages:** %3",
+      "languageDoesNotExit": "That language does not exist!\n**Available languages:** %1",
+      "message": "Changed the language to `%1`!"
     }
   },
   "example": "(Example)",
