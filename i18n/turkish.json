@@ -77,7 +77,7 @@
     "timezone": {
       "triggers": ["sd", "saatdilimi"],
       "helpText": "%1 `%2saatdilimi tr-TR Europe/Istanbul` (__IANA BCP 47 Alt etiketi kayıt defterini kontrol et__ <https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry> & __IETF RFC 5646__ <https://tools.ietf.org/html/rfc5646> yerel etiketler ve __IANA Time Zone Database__ <https://www.iana.org/time-zones> & __Wikipedia__ <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones> zaman dilimleri için.)",
-      "message": "Time will now be displayed as: %1"
+      "message": "Saat dilimi artık böyle gözükecek: %1"
     },
     "message": {
       "triggers": ["msj", "mesaj"],
@@ -88,6 +88,12 @@
       "triggers": ["pfx", "prefix","önek","ünvan"],
       "helpText": "%1 `%2önek !` (Bot'un komut önekini değiştirir.)",
       "message": "Başarılı prefix değiştirildi. Prefixiniz: `%1`."
+     },
+    "language": {
+      "triggers": ["dil", "diller"],
+      "helpText": "%1 `%2dil turkish` (Botun dilini değiştirir.)\n**Mevcut diller:** %3",
+      "languageDoesNotExit": "Üzgünüm, bu dil mevcut değil!\n**Mevcut diller:** %1",
+      "message": "Başarılı dil değiştirildi: `%1`!"
     }
   },
   "example": "(ÖRNEK)",
