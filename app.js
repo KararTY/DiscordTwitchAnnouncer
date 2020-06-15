@@ -315,7 +315,7 @@ const commands = (translate) => [
       const discordChannel = message.discord.guild.channels.cache.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first()
       return translate.commands.channel.helpText
         .replace(/%1/g, translate.example)
-        .replace('%2', message.prefix)
+        .replace(/%2/g, message.prefix)
         .replace('%3', discordChannel.name)
         .replace('%4', discordChannel.id)
     },
@@ -443,6 +443,43 @@ const commands = (translate) => [
         } else return message.discord.reply(translate.commands.language.languageDoesNotExit.replace('%1', Object.keys(translations).join(', ')))
       } else return false
     }
+  }),
+  new Command({
+    commandNames: translate.commands.announcementChannel.triggers,
+    helpText: (message) => {
+      const discordChannel = message.discord.guild.channels.cache.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first()
+      return translate.commands.announcementChannel.helpText
+        .replace(/%1/g, translate.example)
+        .replace(/%2/g, message.prefix)
+        .replace('%3', discordChannel.name)
+        .replace('%4', discordChannel.id)
+    },
+    handler: (message) => {
+      const providedStreamer = message.cmd[1]
+      if (providedStreamer) {
+        let channelID = message.cmd[2]
+        const foundIndex = data.guilds[message.gid].streamers.findIndex(streamer => streamer.name === providedStreamer)
+        if (foundIndex > -1) {
+          if (channelID) {
+            channelID = channelID.replace(/[^0-9]/g, '')
+            if (message.discord.guild.channels.cache.get(channelID) && message.discord.guild.channels.cache.get(channelID).memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')) {
+              if (channelID === data.guilds[message.gid].announcementChannel) {
+                delete data.guilds[message.gid].streamers[foundIndex].announcementChannel
+                saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers }])
+              } else {
+                data.guilds[message.gid].streamers[foundIndex].announcementChannel = channelID
+                saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers }])
+              }
+              return message.discord.reply(translate.commands.announcementChannel.message)
+            } else return message.discord.reply(translate.commands.announcementChannel.noPermissionsForChannel)
+          } else return message.discord.reply(
+            translate.commands.announcementChannel.announcementChannel
+              .replace('%1', data.guilds[message.gid].streamers[foundIndex].name)
+              .replace('%2', `<#${data.guilds[message.gid].streamers[foundIndex].announcementChannel || data.guilds[message.gid].announcementChannel}>`)
+            )
+        } else return message.discord.reply(translate.commands.announcementChannel.streamerDoesNotExist)
+      } else return false
+    }
   })
 ]
 
@@ -554,7 +591,9 @@ async function check () {
               data.guilds[guildID].streamers[i].lastStartedAt = cache[guildID][i].started
               saveData([{ guild: guildID, entry: 'streamers', value: data.guilds[guildID].streamers }])
 
-              announcements.push(sendMessage(guildID, { cachedImage: cachedImages[cache[guildID][i].thumbnail], streamInfo, gameInfo })) // Batch announcements.
+              const streamerInfo = data.guilds[guildID].streamers[i]
+
+              announcements.push(sendMessage(guildID, streamerInfo, { cachedImage: cachedImages[cache[guildID][i].thumbnail], streamInfo, gameInfo })) // Batch announcements.
             }
           } else cache[guildID][i].streaming = false // Not live.
         }
@@ -599,23 +638,23 @@ const parseAnnouncementMessage = (guildID, { streamInfo, gameInfo }) => {
     .replace('%title%', streamInfo.title)
 }
 
-async function sendMessage (guildID, { cachedImage, streamInfo, gameInfo }) {
+async function sendMessage (guildID, streamerInfo, { cachedImage, streamInfo, gameInfo }) {
   const imageFileName = `${streamInfo.name}_${Date.now()}.jpg`
 
   const embed = streamPreviewEmbed(guildID, { imageFileName, streamInfo, gameInfo })
 
-  if (client.channels.cache.get(data.guilds[guildID].announcementChannel)) {
+  const announcementChannel = streamerInfo.announcementChannel || data.guilds[guildID].announcementChannel
+  if (client.channels.cache.get(announcementChannel)) {
     let message
     const parsedAnnouncementMessage = parseAnnouncementMessage(guildID, { streamInfo, gameInfo })
     try {
-      message = await client.channels.cache.get(data.guilds[guildID].announcementChannel).send(`${parsedAnnouncementMessage} http://www.twitch.tv/${streamInfo.name}`, {
+      message = await client.channels.cache.get(announcementChannel).send(`${parsedAnnouncementMessage} http://www.twitch.tv/${streamInfo.name}`, {
         embed, files: [{ attachment: cachedImage, name: imageFileName }]
       })
     } catch (err) {
-      console.error(err.name, err.message, err.code, translate.inGuild.concat(client.guilds.cache.get(guildID).name))
       if (err.message === 'Missing Permissions') {
-        message = await client.channels.cache.get(data.guilds[guildID].announcementChannel).send(`${parsedAnnouncementMessage} http://www.twitch.tv/${streamInfo.name}`)
-      }
+        message = await client.channels.cache.get(announcementChannel).send(`${parsedAnnouncementMessage} http://www.twitch.tv/${streamInfo.name}`)
+      } else console.error(err.name, err.message, err.code, translate.inGuild.concat(client.guilds.cache.get(guildID).name))
     }
 
     if (data.guilds[guildID].reactions.length > 0) {
@@ -630,8 +669,8 @@ async function sendMessage (guildID, { cachedImage, streamInfo, gameInfo }) {
       }
     }
 
-    console.log(translate.announcedInOverAtGuild, streamInfo.name, client.channels.cache.get(data.guilds[guildID].announcementChannel).name, client.guilds.cache.get(guildID).name)
-  } else console.log(translate.announcementChannelDoesNotExist, data.guilds[guildID].announcementChannel, client.guilds.cache.get(guildID).name)
+    console.log(translate.announcedInOverAtGuild, streamInfo.name, client.channels.cache.get(announcementChannel).name, client.guilds.cache.get(guildID).name)
+  } else console.log(translate.announcementChannelDoesNotExist, announcementChannel, client.guilds.cache.get(guildID).name)
 
   return Promise.resolve()
 }

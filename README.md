@@ -59,6 +59,7 @@ Available commands:
   * `%title%` Stream title
 * (Example) `!prefix #`
 * (Example) `!language english` Check i18n folder for available languages.
+* (Example) `!announcementchannel Streamer_Name 000000000000000000`
 
 ### Contributing
 Fork project & Send a pull request. Use eslint, thanks.

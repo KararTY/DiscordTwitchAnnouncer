@@ -60,7 +60,7 @@
     },
     "channel": {
       "triggers": ["ch", "chn", "channel"],
-      "helpText": "%1 `%2channel #%3` or %1 `!channel %4` (**Required!** Text channel for announcements.)",
+      "helpText": "%1 `%2channel #%3` or %1 `%2channel %4` (**Required!** Text channel for announcements.)",
       "message": "changed announcement channel.",
       "noPermissionsForChannel": "can not post in that channel. Change permissions, or choose another channel."
     },
@@ -95,6 +95,14 @@
       "helpText": "%1 `%2language english` (Changes the bot's language.)\n**Available languages:** %3",
       "languageDoesNotExit": "That language does not exist!\n**Available languages:** %1",
       "message": "Changed the language to `%1`!"
+    },
+    "announcementChannel": {
+      "triggers": ["ac", "announcementchannel"],
+      "helpText": "%1 `%2announcementchannel Streamer_Name #%3` or %1 `%2announcementchannel Streamer_Name %4` (Changes announcement channel for specified streamer.)",
+      "message": "changed announcement channel for streamer.",
+      "noPermissionsForChannel": "can not post in that channel. Change permissions, or choose another channel.",
+      "streamerDoesNotExist": "streamer doesn't exist!",
+      "announcementChannel": "%1's announcement channel is %2"
     }
   },
   "example": "(Example)",
