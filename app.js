@@ -208,19 +208,20 @@ const commands = (translate) => [
       if (message.cmd[1]) {
         const command = commands(translate).find(command => command.commandNames.indexOf(message.cmd[1].toLowerCase()) > -1)
         return message.discord.reply(command ? typeof command.helpText === 'function' ? command.helpText(message) : command.helpText : 'that command does not exist.')
-      } else {
-        try {
-          const embed = new Discord.MessageEmbed()
-            .setTitle(translate.commands.help.availableCommands)
-          for (let index = 0; index < commands(translate).length; index++) {
-            const cmd = commands(translate)[index]
-            embed.addField(cmd.commandNames.join(', '), typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText)
-          }
-          await message.discord.channel.send(translate.commands.help.message, { embed })
-        } catch (err) {
-          if (err.message === 'Missing Permissions') {
-            return message.discord.reply(translate.commands.help.message.concat(commands.map(cmd => `\n${typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText}`)))
-          }
+      }
+
+      try {
+        const embed = new Discord.MessageEmbed()
+          .setTitle(translate.commands.help.availableCommands)
+        for (let index = 0; index < commands(translate).length; index++) {
+          const cmd = commands(translate)[index]
+          embed.addField(cmd.commandNames.join(', '), typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText)
+        }
+
+        await message.discord.channel.send(translate.commands.help.message, { embed })
+      } catch (err) {
+        if (err.message === 'Missing Permissions') {
+          return message.discord.reply(translate.commands.help.message.concat(commands.map(cmd => `\n${typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText}`)))
         }
       }
     }
@@ -258,37 +259,17 @@ const commands = (translate) => [
     handler: async (message) => {
       // Add streamer to cache.
       const streamerName = message.cmd[1] ? message.cmd[1].toLowerCase().split('/').pop() : false
-      if (streamerName) {
-        if (cache[message.gid].findIndex(s => s.name.toLowerCase() === streamerName) > -1) return message.discord.reply(translate.commands.add.alreadyExists)
-        cache[message.gid].push({ name: streamerName })
-        saveData([{ guild: message.gid, entry: 'streamers', action: 'push', value: { name: streamerName } }])
-        const test = {
-          gameInfo: {
-            name: translate.commands.add.gameInfoName,
-            box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/Science%20&%20Technology-{width}x{height}.jpg'
-          },
-          streamInfo: {
-            name: 'twitchdev',
-            avatar: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Twitch_logo_2019.svg/300px-Twitch_logo_2019.svg.png',
-            type: translate.commands.add.streamInfoType,
-            title: translate.commands.add.streamInfoTitle
-          }
-        }
-        try {
-          const embed = streamPreviewEmbed(message.gid, { ...test, imageFileName: null })
-          embed.setImage('https://static-cdn.jtvnw.net/ttv-static/404_preview-1920x1080.jpg')
-          await message.discord.channel.send(parseAnnouncementMessage(message.gid, test), { embed })
-        } catch (err) {
-          if (err.message === 'Missing Permissions') {
-            await message.discord.channel.send(parseAnnouncementMessage(message.gid, test))
-          }
-        }
-        return message.discord.reply(
-          `%1 ${data.guilds[message.gid].announcementChannel ? '' : '\n%2'}`
-            .replace('%1', translate.commands.add.message)
-            .replace('%2', translate.commands.add.addAnnouncementChannel)
-        )
-      } else return false
+      if (!streamerName) return false
+      if (cache[message.gid].findIndex(s => s.name.toLowerCase() === streamerName) > -1) return message.discord.reply(translate.commands.add.alreadyExists)
+
+      cache[message.gid].push({ name: streamerName })
+      saveData([{ guild: message.gid, entry: 'streamers', action: 'push', value: { name: streamerName } }])
+
+      return message.discord.reply(
+        `%1 ${data.guilds[message.gid].announcementChannel ? '' : '\n%2'}`
+          .replace('%1', translate.commands.add.message)
+          .replace('%2', translate.commands.add.addAnnouncementChannel)
+      )
     }
   }),
   new Command({
@@ -301,12 +282,12 @@ const commands = (translate) => [
     handler: (message) => {
       // Remove streamer from cache.
       const streamerName = message.cmd[1] ? message.cmd[1].toLowerCase().split('/').pop() : false
-      if (streamerName) {
-        if (cache[message.gid].findIndex(s => s.name.toLowerCase() === streamerName) === -1) return message.discord.reply(translate.commands.remove.doesNotExist)
-        cache[message.gid] = cache[message.gid].filter(s => s.name.toLowerCase() !== streamerName)
-        saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers.filter(s => s.name !== streamerName) }])
-        return message.discord.reply(translate.commands.remove.message)
-      } else return false
+      if (!streamerName) return false
+      if (cache[message.gid].findIndex(s => s.name.toLowerCase() === streamerName) === -1) return message.discord.reply(translate.commands.remove.doesNotExist)
+
+      cache[message.gid] = cache[message.gid].filter(s => s.name.toLowerCase() !== streamerName)
+      saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers.filter(s => s.name !== streamerName) }])
+      return message.discord.reply(translate.commands.remove.message)
     }
   }),
   new Command({
@@ -321,13 +302,13 @@ const commands = (translate) => [
     },
     handler: (message) => {
       // Choose which channel to post live announcements in.
-      if (message.cmd[1]) {
-        const channelID = message.cmd[1].replace(/[^0-9]/g, '')
-        if (message.discord.guild.channels.cache.get(channelID) && message.discord.guild.channels.cache.get(channelID).memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')) {
-          saveData([{ guild: message.gid, entry: 'announcementChannel', value: channelID }])
-          return message.discord.reply(translate.commands.channel.message)
-        } else return message.discord.reply(translate.commands.channel.noPermissionsForChannel)
-      } else return false
+      if (!message.cmd[1]) return false
+
+      const channelID = message.cmd[1].replace(/[^0-9]/g, '')
+      if (message.discord.guild.channels.cache.get(channelID) && message.discord.guild.channels.cache.get(channelID).memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')) {
+        saveData([{ guild: message.gid, entry: 'announcementChannel', value: channelID }])
+        return message.discord.reply(translate.commands.channel.message)
+      } else return message.discord.reply(translate.commands.channel.noPermissionsForChannel)
     }
   }),
   new Command({
@@ -339,20 +320,20 @@ const commands = (translate) => [
         .replace('%3', message.discord.author.id)
     },
     handler: (message) => {
-      if (message.discord.author.id === message.discord.guild.owner.id) {
-        if (message.cmd[1]) {
-          const operator = message.cmd[1].replace(/[^0-9]/g, '')
-          let added = true
-          if (data.guilds[message.gid].operator && data.guilds[message.gid].operator.includes(operator)) {
-            added = false
-            saveData([{ guild: message.gid, entry: 'operator', action: 'splice', value: [data.guilds[message.gid].operator.indexOf(operator), 1] }])
-          } else {
-            if (!data.guilds[message.gid].operator) saveData([{ guild: message.gid, entry: 'operator', value: [] }])
-            saveData([{ guild: message.gid, entry: 'operator', action: 'push', value: operator }])
-          }
-          return message.discord.reply(translate.commands.operator.message.replace('%1', added ? translate.added : translate.removed))
-        } else return false
-      } else return message.discord.reply(translate.commands.operator.noPermission)
+      if (message.discord.author.id !== message.discord.guild.owner.id) return message.discord.reply(translate.commands.operator.noPermission)
+      if (!message.cmd[1]) return false
+
+      const operator = message.cmd[1].replace(/[^0-9]/g, '')
+      let added = true
+      if (data.guilds[message.gid].operator && data.guilds[message.gid].operator.includes(operator)) {
+        added = false
+        saveData([{ guild: message.gid, entry: 'operator', action: 'splice', value: [data.guilds[message.gid].operator.indexOf(operator), 1] }])
+      } else {
+        if (!data.guilds[message.gid].operator) saveData([{ guild: message.gid, entry: 'operator', value: [] }])
+        saveData([{ guild: message.gid, entry: 'operator', action: 'push', value: operator }])
+      }
+
+      return message.discord.reply(translate.commands.operator.message.replace('%1', added ? translate.added : translate.removed))
     }
   }),
   new Command({
@@ -363,20 +344,22 @@ const commands = (translate) => [
         .replace('%2', message.prefix)
     },
     handler: (message) => {
-      if (message.cmd[1]) {
-        let emoji
-        if (message.cmd[1].match(/<a?:[\w]+:[0-9]+>/g)) {
-          emoji = message.cmd[1].split(':')[2].replace(/[^0-9]/g, '')
-        } else emoji = message.cmd[1]
-        let added = true
-        if (data.guilds[message.gid].reactions.includes(emoji)) {
-          added = false
-          saveData([{ guild: message.gid, entry: 'reactions', action: 'splice', value: [data.guilds[message.gid].reactions.indexOf(emoji), 1] }])
-        } else {
-          saveData([{ guild: message.gid, entry: 'reactions', action: 'push', value: emoji }])
-        }
-        return message.discord.reply(translate.commands.reaction.message.replace('%1', added ? translate.added : translate.removed))
-      } else return false
+      if (!message.cmd[1]) return false
+
+      let emoji
+      if (message.cmd[1].match(/<a?:[\w]+:[0-9]+>/g)) {
+        emoji = message.cmd[1].split(':')[2].replace(/[^0-9]/g, '')
+      } else emoji = message.cmd[1]
+
+      let added = true
+      if (data.guilds[message.gid].reactions.includes(emoji)) {
+        added = false
+        saveData([{ guild: message.gid, entry: 'reactions', action: 'splice', value: [data.guilds[message.gid].reactions.indexOf(emoji), 1] }])
+      } else {
+        saveData([{ guild: message.gid, entry: 'reactions', action: 'push', value: emoji }])
+      }
+
+      return message.discord.reply(translate.commands.reaction.message.replace('%1', added ? translate.added : translate.removed))
     }
   }),
   new Command({
@@ -387,13 +370,15 @@ const commands = (translate) => [
         .replace('%2', message.prefix)
     },
     handler: (message) => {
-      if (message.cmd[1]) {
-        saveData([{ guild: message.gid, entry: 'time', value: { locale: message.cmd[1], timeZone: data.guilds[message.gid].time.timeZone } }])
-        if (message.cmd[2]) {
-          saveData([{ guild: message.gid, entry: 'time', value: { locale: data.guilds[message.gid].time.timeZone, timeZone: message.cmd[2] } }])
-        }
-        return message.discord.reply(translate.commands.timezone.message.replace('%1', moment.utc().locale(data.guilds[message.gid].time.locale).tz(data.guilds[message.gid].time.timeZone).format('LL LTS zz')))
-      } else return false
+      if (!message.cmd[1]) return false
+
+      saveData([{ guild: message.gid, entry: 'time', value: { locale: message.cmd[1], timeZone: data.guilds[message.gid].time.timeZone } }])
+
+      if (message.cmd[2]) {
+        saveData([{ guild: message.gid, entry: 'time', value: { locale: data.guilds[message.gid].time.timeZone, timeZone: message.cmd[2] } }])
+      }
+
+      return message.discord.reply(translate.commands.timezone.message.replace('%1', moment.utc().locale(data.guilds[message.gid].time.locale).tz(data.guilds[message.gid].time.timeZone).format('LL LTS zz')))
     }
   }),
   new Command({
@@ -420,10 +405,10 @@ const commands = (translate) => [
         .replace('%2', message.prefix)
     },
     handler: (message) => {
-      if (message.cmd[1]) {
-        saveData([{ guild: message.gid, entry: 'prefix', value: message.cmd[1] }])
-        return message.discord.reply(translate.commands.prefix.message.replace('%1', message.cmd[1]))
-      } else return false
+      if (!message.cmd[1]) return false
+
+      saveData([{ guild: message.gid, entry: 'prefix', value: message.cmd[1] }])
+      return message.discord.reply(translate.commands.prefix.message.replace('%1', message.cmd[1]))
     }
   }),
   new Command({
@@ -436,12 +421,14 @@ const commands = (translate) => [
     },
     handler: (message) => {
       const providedValue = message.cmd[1]
-      if (providedValue) {
-        if (translations[providedValue.toLowerCase()]) {
-          saveData([{ guild: message.gid, entry: 'language', value: message.cmd[1] }])
-          return message.discord.reply(translate.commands.language.message.replace('%1', providedValue.toLowerCase()))
-        } else return message.discord.reply(translate.commands.language.languageDoesNotExit.replace('%1', Object.keys(translations).join(', ')))
-      } else return false
+      if (!providedValue) return false
+
+      if (!translations[providedValue.toLowerCase()]) {
+        return message.discord.reply(translate.commands.language.languageDoesNotExit.replace('%1', Object.keys(translations).join(', ')))
+      }
+
+      saveData([{ guild: message.gid, entry: 'language', value: message.cmd[1] }])
+      return message.discord.reply(translate.commands.language.message.replace('%1', providedValue.toLowerCase()))
     }
   }),
   new Command({
@@ -456,29 +443,33 @@ const commands = (translate) => [
     },
     handler: (message) => {
       const providedStreamer = message.cmd[1]
-      if (providedStreamer) {
-        let channelID = message.cmd[2]
-        const foundIndex = data.guilds[message.gid].streamers.findIndex(streamer => streamer.name === providedStreamer)
-        if (foundIndex > -1) {
-          if (channelID) {
-            channelID = channelID.replace(/[^0-9]/g, '')
-            if (message.discord.guild.channels.cache.get(channelID) && message.discord.guild.channels.cache.get(channelID).memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')) {
-              if (channelID === data.guilds[message.gid].announcementChannel) {
-                delete data.guilds[message.gid].streamers[foundIndex].announcementChannel
-                saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers }])
-              } else {
-                data.guilds[message.gid].streamers[foundIndex].announcementChannel = channelID
-                saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers }])
-              }
-              return message.discord.reply(translate.commands.announcementChannel.message)
-            } else return message.discord.reply(translate.commands.announcementChannel.noPermissionsForChannel)
-          } else return message.discord.reply(
-            translate.commands.announcementChannel.announcementChannel
-              .replace('%1', data.guilds[message.gid].streamers[foundIndex].name)
-              .replace('%2', `<#${data.guilds[message.gid].streamers[foundIndex].announcementChannel || data.guilds[message.gid].announcementChannel}>`)
-            )
-        } else return message.discord.reply(translate.commands.announcementChannel.streamerDoesNotExist)
-      } else return false
+      if (!providedStreamer) return false
+
+      let channelID = message.cmd[2]
+
+      const foundIndex = data.guilds[message.gid].streamers.findIndex(streamer => streamer.name === providedStreamer)
+      if (foundIndex === -1) return message.discord.reply(translate.commands.announcementChannel.streamerDoesNotExist)
+
+      if (!channelID) {
+        return message.discord.reply(
+          translate.commands.announcementChannel.announcementChannel
+            .replace('%1', data.guilds[message.gid].streamers[foundIndex].name)
+            .replace('%2', `<#${data.guilds[message.gid].streamers[foundIndex].announcementChannel || data.guilds[message.gid].announcementChannel}>`)
+        )
+      }
+
+      channelID = channelID.replace(/[^0-9]/g, '')
+      if (message.discord.guild.channels.cache.get(channelID) && message.discord.guild.channels.cache.get(channelID).memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')) {
+        if (channelID === data.guilds[message.gid].announcementChannel) {
+          delete data.guilds[message.gid].streamers[foundIndex].announcementChannel
+          saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers }])
+        } else {
+          data.guilds[message.gid].streamers[foundIndex].announcementChannel = channelID
+          saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers }])
+        }
+
+        return message.discord.reply(translate.commands.announcementChannel.message)
+      } else return message.discord.reply(translate.commands.announcementChannel.noPermissionsForChannel)
     }
   })
 ]
