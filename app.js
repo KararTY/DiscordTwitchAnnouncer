@@ -684,7 +684,7 @@ client.on('message', message => {
       if (data.guilds[message.guild.id].operator.includes(message.author.id)) {
         // If message is from an operator.
         allow = true
-      } else if (message.author.id === message.guild.owner.id) {
+      } else if (message.author.id === message.guild.ownerID) {
         // Or from server owner.
         allow = true
       }
