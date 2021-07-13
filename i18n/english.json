@@ -82,8 +82,9 @@
     },
     "message": {
       "triggers": ["msg", "message"],
-      "helpText": "%1 `%2message @everyone %name% **%status%**, with **%game%**: *%title%*` (Change stream announcement message. Supports *%name%* for streamer's name, *%status%* for type of stream (VOD, LIVE, RERUN), *%game%* for game title and *%title%* for stream title.)",
-      "message": "Changed announcement message."
+      "helpText": "%1 `%2message <streamerName> @everyone %name% **%status%**, with **%game%**: *%title%*` (Change stream announcement message. If *<streamerName>* is filled out, it will change that streamer's announcement message. Make sure to remove the `<>`. Supports *%name%* for streamer's name, *%status%* for type of stream (VOD, LIVE, RERUN), *%game%* for game title and *%title%* for stream title, *%link%* for twitch link.)",
+      "message": "Changed announcement message.",
+      "messageStreamer": "Changed announcement message for streamer %1."
     },
     "prefix": {
       "triggers": ["pfx", "prefix"],

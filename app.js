@@ -176,6 +176,31 @@ async function refreshAppToken () {
   return true
 }
 
+async function sendTestMessage (translate, message, streamer = 'twitchdev') {
+  const test = {
+    gameInfo: {
+      name: translate.commands.add.gameInfoName,
+      box_art_url: 'https://static-cdn.jtvnw.net/ttv-boxart/Science%20&%20Technology-{width}x{height}.jpg'
+    },
+    streamInfo: {
+      name: streamer,
+      avatar: 'https://brand.twitch.tv/assets/images/twitch-extruded.png',
+      type: translate.commands.add.streamInfoType,
+      title: translate.commands.add.streamInfoTitle
+    }
+  }
+
+  try {
+    const embed = streamPreviewEmbed(message.gid, { ...test, imageFileName: null })
+    embed.setImage('https://static-cdn.jtvnw.net/ttv-static/404_preview-1920x1080.jpg')
+    await message.discord.channel.send(parseAnnouncementMessage(message.gid, test), { embed })
+  } catch (err) {
+    if (err.message !== 'Missing Permissions') {
+      await message.discord.channel.send(parseAnnouncementMessage(message.gid, test))
+    }
+  }
+}
+
 class Message {
   constructor (message) {
     this.cmd = message.content.replace(new RegExp(`^<@${client.user.id}> `), '!').split(/[ ]+/)
@@ -388,13 +413,26 @@ const commands = (translate) => [
         .replace('%1', translate.example)
         .replace('%2', message.prefix)
     },
-    handler: (message) => {
+    handler: async (message) => {
       // Change stream announcement message.
       const cleanedContent = message.cmd.slice(1).join(' ')
-      if (cleanedContent.length > 0) {
+      if (cleanedContent.length === 0) return false
+
+      const streamersIndex = data.guilds[message.gid].streamers.findIndex(i => i.name === message.cmd[1].toLowerCase())
+      // Change announcement message for said streamer.
+      if (streamersIndex > -1) {
+        data.guilds[message.gid].streamers[streamersIndex].message = message.cmd.slice(2).join(' ')
+        saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers }])
+
+        await sendTestMessage(translate, message, message.cmd[1])
+        return message.discord.reply(translate.commands.message.messageStreamer
+          .replace('%1', message.cmd[1]))
+      } else {
         saveData([{ guild: message.gid, entry: 'message', value: cleanedContent }])
+
+        await sendTestMessage(translate, message)
         return message.discord.reply(translate.commands.message.message)
-      } else return false
+      }
     }
   }),
   new Command({
@@ -559,7 +597,14 @@ async function check () {
       }
     }
 
-    const streamedGames = await Promise.all(promise)
+    let streamedGames
+
+    try {
+      streamedGames = await Promise.all(promise)
+    } catch (error) {
+      console.error(error)
+    }
+
     const announcements = []
     for (let index = 0; index < guildIDs.length; index++) {
       const guildID = guildIDs[index]
@@ -570,6 +615,7 @@ async function check () {
             const isStreaming = cache[guildID][i].streaming
             const started = streams.find(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase()).started
             const lastStartedAt = data.guilds[guildID].streamers.find(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase()).lastStartedAt
+
             if (!isStreaming && new Date(started).getTime() > new Date(lastStartedAt || 0).getTime()) {
               // Push info.
               const streamInfo = streams.find(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())
@@ -622,11 +668,17 @@ const streamPreviewEmbed = (guildID, { imageFileName, streamInfo, gameInfo }) =>
 }
 
 const parseAnnouncementMessage = (guildID, { streamInfo, gameInfo }) => {
-  return data.guilds[guildID].message
+  const streamer = data.guilds[guildID].streamers.find(s => s.name === streamInfo.name.toLowerCase())
+  let message = (streamer && streamer.message && streamer.message.length > 0) ? streamer.message : data.guilds[guildID].message
+
+  if (!message.includes('%link%')) message += ` http://www.twitch.tv/${streamInfo.name}`
+
+  return message
     .replace('%name%', streamInfo.name)
     .replace('%status%', streamInfo.type.toUpperCase())
     .replace('%game%', gameInfo ? gameInfo.name : translate.unknownGame)
     .replace('%title%', streamInfo.title)
+    .replace('%link%', `http://www.twitch.tv/${streamInfo.name}`)
 }
 
 async function sendMessage (guildID, streamerInfo, { cachedImage, streamInfo, gameInfo }) {
@@ -639,12 +691,12 @@ async function sendMessage (guildID, streamerInfo, { cachedImage, streamInfo, ga
     let message
     const parsedAnnouncementMessage = parseAnnouncementMessage(guildID, { streamInfo, gameInfo })
     try {
-      message = await client.channels.cache.get(announcementChannel).send(`${parsedAnnouncementMessage} http://www.twitch.tv/${streamInfo.name}`, {
+      message = await client.channels.cache.get(announcementChannel).send(parsedAnnouncementMessage, {
         embed, files: [{ attachment: cachedImage, name: imageFileName }]
       })
     } catch (err) {
       if (err.message === 'Missing Permissions') {
-        message = await client.channels.cache.get(announcementChannel).send(`${parsedAnnouncementMessage} http://www.twitch.tv/${streamInfo.name}`)
+        message = await client.channels.cache.get(announcementChannel).send(parsedAnnouncementMessage)
       } else console.error(err.name, err.message, err.code, translate.inGuild.concat(client.guilds.cache.get(guildID).name))
     }
 
@@ -668,6 +720,7 @@ async function sendMessage (guildID, streamerInfo, { cachedImage, streamInfo, ga
 
 client.on('message', message => {
   let allow = false
+
   if (message.guild && message.member) {
     // If message comes from a guild and guild member.
     if (data.guilds[message.guild.id].operator && data.guilds[message.guild.id].operator.length > 0) {
@@ -687,6 +740,7 @@ client.on('message', message => {
       allow = true
     }
   }
+
   if (allow) {
     const cleanedMessage = message.content.replace(new RegExp(`^<@${client.user.id}> `), '!')
     if (message.cleanContent.startsWith(data.guilds[message.guild.id].prefix || '!') || message.mentions.users.find(u => u.id === client.user.id)) {

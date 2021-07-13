@@ -1,11 +1,12 @@
 {
   "name": "discordtwitchannouncer",
-  "version": "3.1.5",
+  "version": "3.2.0",
   "description": "Discord bot that announces when Twitch channels go live.",
   "main": "app.js",
   "private": true,
   "scripts": {
     "start": "node ./app.js",
+    "lint": "standard --lint",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,16 +20,9 @@
   },
   "homepage": "https://github.com/KararTY/DiscordTwitchAnnouncer#readme",
   "dependencies": {
-    "discord.js": "^12.2.0",
-    "moment-timezone": "^0.5.31",
-    "node-fetch": "^2.6.1"
-  },
-  "devDependencies": {
-    "eslint": "^6.2.1",
-    "eslint-config-standard": "^14.0.0",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-node": "^9.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.1"
+    "discord.js": "^12.5.3",
+    "moment-timezone": "^0.5.33",
+    "node-fetch": "^2.6.1",
+    "standard": "^16.0.3"
   }
 }
