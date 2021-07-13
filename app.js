@@ -661,7 +661,7 @@ async function sendMessage (guildID, streamerInfo, { cachedImage, streamInfo, ga
       for (let index = 0; index < data.guilds[guildID].reactions.length; index++) {
         const emoji = data.guilds[guildID].reactions[index]
         try {
-          if (Number.isInteger(Number(emoji))) await message.react(message.guild.emojis.get(emoji))
+          if (Number.isInteger(Number(emoji))) await message.react(message.guild.emojis.cache.get(emoji))
           else await message.react(emoji)
         } catch (err) {
           console.error(err.name, err.message, err.code, `in guild ${client.guilds.cache.get(guildID).name}`)
