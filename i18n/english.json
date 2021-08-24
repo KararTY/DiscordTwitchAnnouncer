@@ -26,6 +26,7 @@
   "activityHasBeenSet": "Activity has been set.",
   "reconnectingToDiscord": "Reconnecting to Discord...",
   "reconnectedToDiscord": "Reconnected to Discord. All functional.",
+  "includeCooldownTimerWarning": "A recent update has introduced a cooldown for every announcement, to reduce spam during 'IRL streams', please add 'cooldownTimer: 21600000,' in your settings.json file. Using 6 hour cooldown for now.",
   "commands": {
     "help": {
       "triggers": ["help", "h"],

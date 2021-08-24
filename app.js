@@ -4,8 +4,10 @@ const path = require('path')
 const moment = require('moment-timezone')
 const fetch = require('node-fetch')
 
-const Discord = require('discord.js')
-const client = new Discord.Client()
+const { Intents, Client, MessageEmbed } = require('discord.js')
+const client = new Client({
+  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS]
+})
 
 const settings = require('./settings.js')
 
@@ -20,8 +22,13 @@ const translate = translations.english
 if (!settings.discord.token) throw new Error(translate.noDiscordToken)
 if (!settings.twitch.clientID) throw new Error(translate.noTwitchClientID)
 if (!settings.twitch.clientSecret) {
-  console.log(translate.updatingFromPreviousIncludeTwitchClientSecret)
+  console.log(translate.includeTwitchClientSecret)
   throw new Error(translate.noTwitchClientSecret)
+}
+
+if (typeof settings.cooldownTimer === 'undefined') {
+  console.log(translate.includeCooldownTimerWarning)
+  settings.cooldownTimer = 21600000
 }
 
 // Create data.json if it doesn't exist.
@@ -75,7 +82,10 @@ function saveData (d = [{ guild: '', entry: '', action: '', value: 'any' }]) {
   return fs.writeFileSync(path.join(__dirname, 'data.json'), JSON.stringify(dataOnFile, null, 2))
 }
 
-const cache = {}
+const cache = {
+  streamersCooldown: new Map(),
+  guilds: []
+}
 const initialization = new Date()
 const defaultGuildData = {
   streamers: [],
@@ -236,7 +246,7 @@ const commands = (translate) => [
       }
 
       try {
-        const embed = new Discord.MessageEmbed()
+        const embed = new MessageEmbed()
           .setTitle(translate.commands.help.availableCommands)
         for (let index = 0; index < commands(translate).length; index++) {
           const cmd = commands(translate)[index]
@@ -285,9 +295,10 @@ const commands = (translate) => [
       // Add streamer to cache.
       const streamerName = message.cmd[1] ? message.cmd[1].toLowerCase().split('/').pop() : false
       if (!streamerName) return false
-      if (cache[message.gid].findIndex(s => s.name.toLowerCase() === streamerName) > -1) return message.discord.reply(translate.commands.add.alreadyExists)
+      if (cache.guilds[message.gid].findIndex(s => s.name.toLowerCase() === streamerName) > -1) return message.discord.reply(translate.commands.add.alreadyExists)
 
-      cache[message.gid].push({ name: streamerName })
+      cache.guilds[message.gid].push({ name: streamerName })
+      cache.streamersCooldown.set(streamerName.toLowerCase(), Date.now())
       saveData([{ guild: message.gid, entry: 'streamers', action: 'push', value: { name: streamerName } }])
 
       return message.discord.reply(
@@ -308,9 +319,9 @@ const commands = (translate) => [
       // Remove streamer from cache.
       const streamerName = message.cmd[1] ? message.cmd[1].toLowerCase().split('/').pop() : false
       if (!streamerName) return false
-      if (cache[message.gid].findIndex(s => s.name.toLowerCase() === streamerName) === -1) return message.discord.reply(translate.commands.remove.doesNotExist)
+      if (cache.guilds[message.gid].findIndex(s => s.name.toLowerCase() === streamerName) === -1) return message.discord.reply(translate.commands.remove.doesNotExist)
 
-      cache[message.gid] = cache[message.gid].filter(s => s.name.toLowerCase() !== streamerName)
+      cache.guilds[message.gid] = cache.guilds[message.gid].filter(s => s.name.toLowerCase() !== streamerName)
       saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers.filter(s => s.name !== streamerName) }])
       return message.discord.reply(translate.commands.remove.message)
     }
@@ -532,21 +543,24 @@ async function check () {
     return
   }
 
-  const streamers = new Set()
+  const streamersSet = new Set()
 
   const guildIDs = Object.keys(data.guilds)
   for (let i = 0; i < guildIDs.length; i++) {
     const guildID = guildIDs[i]
-    if (client.guilds.cache.find(i => i.id === guildID) && data.guilds[guildID].streamers) data.guilds[guildID].streamers.forEach(stream => streamers.add(stream.name))
+    if (client.guilds.cache.find(i => i.id === guildID) && data.guilds[guildID].streamers) data.guilds[guildID].streamers.forEach(stream => streamersSet.add(stream.name))
   }
 
-  if ([...streamers].length < 1) {
+  if ([...streamersSet].length < 1) {
     setTimeout(check, typeof settings.timer === 'number' ? settings.timer + 5000 : 61000)
     return console.log(translate.noTwitchChannels)
   }
 
+  // Remove streamers that are on cooldown.
+  const streamersArr = [...streamersSet].filter(streamerName => Date.now() >= cache.streamersCooldown.get(streamerName.toLowerCase()))
+
   try {
-    const batches = chunks([...streamers], 100)
+    const batches = chunks(streamersArr, 100)
     const resData = []
     for (let index = 0; index < batches.length; index++) {
       const batch = batches[index]
@@ -609,30 +623,31 @@ async function check () {
     for (let index = 0; index < guildIDs.length; index++) {
       const guildID = guildIDs[index]
       if (data.guilds[guildID].announcementChannel) {
-        for (let i = 0; i < cache[guildID].length; i++) {
-          if (streams.map(s => s.name.toLowerCase()).includes(cache[guildID][i].name ? cache[guildID][i].name.toLowerCase() : '')) {
-          // Make sure they've not already been announced.
-            const isStreaming = cache[guildID][i].streaming
-            const started = streams.find(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase()).started
-            const lastStartedAt = data.guilds[guildID].streamers.find(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase()).lastStartedAt
+        for (let i = 0; i < cache.guilds[guildID].length; i++) {
+          if (streams.map(s => s.name.toLowerCase()).includes(cache.guilds[guildID][i].name ? cache.guilds[guildID][i].name.toLowerCase() : '')) {
+          // Make sure this specific stream hasn't been already announced.
+            const isStreaming = cache.guilds[guildID][i].streaming
+            const started = streams.find(s => s.name.toLowerCase() === cache.guilds[guildID][i].name.toLowerCase()).started
+            const lastStartedAt = data.guilds[guildID].streamers.find(s => s.name.toLowerCase() === cache.guilds[guildID][i].name.toLowerCase()).lastStartedAt
 
             if (!isStreaming && new Date(started).getTime() > new Date(lastStartedAt || 0).getTime()) {
               // Push info.
-              const streamInfo = streams.find(s => s.name.toLowerCase() === cache[guildID][i].name.toLowerCase())
+              const streamInfo = streams.find(s => s.name.toLowerCase() === cache.guilds[guildID][i].name.toLowerCase())
               const gameInfo = (streamedGames[0] && streamedGames[0].data) ? streamedGames[0].data.find(g => g.id === streamInfo.gameID) : undefined
 
-              cache[guildID][i] = streamInfo
-              cache[guildID][i].game = gameInfo
-              cache[guildID][i].streaming = true
+              cache.guilds[guildID][i] = streamInfo
+              cache.guilds[guildID][i].game = gameInfo
+              cache.guilds[guildID][i].streaming = true
+              cache.streamersCooldown.set(streamInfo.name.toLowerCase(), Date.now() + settings.cooldownTimer)
 
-              data.guilds[guildID].streamers[i].lastStartedAt = cache[guildID][i].started
+              data.guilds[guildID].streamers[i].lastStartedAt = cache.guilds[guildID][i].started
               saveData([{ guild: guildID, entry: 'streamers', value: data.guilds[guildID].streamers }])
 
               const streamerInfo = data.guilds[guildID].streamers[i]
 
-              announcements.push(sendMessage(guildID, streamerInfo, { cachedImage: cachedImages[cache[guildID][i].thumbnail], streamInfo, gameInfo })) // Batch announcements.
+              announcements.push(sendMessage(guildID, streamerInfo, { cachedImage: cachedImages[cache.guilds[guildID][i].thumbnail], streamInfo, gameInfo })) // Batch announcements.
             }
-          } else cache[guildID][i].streaming = false // Not live.
+          } else cache.guilds[guildID][i].streaming = false // Not live.
         }
       }
     }
@@ -655,7 +670,7 @@ async function check () {
 }
 
 const streamPreviewEmbed = (guildID, { imageFileName, streamInfo, gameInfo }) => {
-  const embed = new Discord.MessageEmbed()
+  const embed = new MessageEmbed()
     .setColor(0x6441A4)
     .setTitle(`[${streamInfo.type.toUpperCase()}] ${streamInfo.name}`)
     .setDescription(`**${streamInfo.title}**\n${gameInfo ? gameInfo.name : ''}`)
@@ -748,14 +763,14 @@ client.on('message', async message => {
       if (!command) return
 
       const handled = await command.handler(new Message(message))
-      if (typeof handled === 'boolean' && handled === false) message.reply(command.showHelpText(new Message(message))) // Handle command.
+      if (typeof handled === 'boolean' && handled === false) message.reply(command.showHelpText(new Message(message)))
     }
   }
 })
 
 client.on('guildCreate', guild => {
   if (!data.guilds[guild.id]) {
-    cache[guild.id] = []
+    cache.guilds[guild.id] = []
     saveData([{ guild: guild.id, action: 'addGuild' }])
     console.log(translate.addedGuild)
   }
@@ -763,7 +778,7 @@ client.on('guildCreate', guild => {
 
 client.on('guildDelete', guild => {
   if (data.guilds[guild.id]) {
-    cache[guild.id] = undefined
+    cache.guilds[guild.id] = undefined
     saveData([{ guild: guild.id, action: 'removeGuild' }])
     console.log(translate.removedGuild)
   }
@@ -795,10 +810,11 @@ client.once('ready', async () => {
   for (let index = 0; index < guildIDs.length; index++) {
     const guildID = guildIDs[index]
     const guild = data.guilds[guildID]
-    cache[guildID] = []
+    cache.guilds[guildID] = []
     for (let i = 0; i < guild.streamers.length; i++) {
       const streamer = guild.streamers[i]
-      cache[guildID].push({ name: streamer.name, streaming: false })
+      cache.guilds[guildID].push({ name: streamer.name, streaming: false })
+      cache.streamersCooldown.set(streamer.name.toLowerCase(), Date.now() - 1000)
     }
   }
 
