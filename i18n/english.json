@@ -27,6 +27,7 @@
   "reconnectingToDiscord": "Reconnecting to Discord...",
   "reconnectedToDiscord": "Reconnected to Discord. All functional.",
   "includeCooldownTimerWarning": "A recent update has introduced a cooldown for every announcement, to reduce spam during 'IRL streams', please add 'cooldownTimer: 21600000,' in your settings.json file. Using 6 hour cooldown for now.",
+  "twitchError": "Something happened with your Twitch request: %1",
   "commands": {
     "help": {
       "triggers": ["help", "h"],
@@ -50,8 +51,9 @@
       "streamInfoTitle": "(DEMO) Stream title goes here",
       "streamInfoType": "(DEMO) LIVE/VOD/RERUN...",
       "alreadyExists": "already exists!",
-      "message": "added streamer to announcer.",
-      "addAnnouncementChannel": "Don't forget to add announcement channel with `!channel #channelName`."
+      "message": "added https://www.twitch.tv/%1 to announcer.",
+      "addAnnouncementChannel": "Don't forget to add announcement channel with `!channel #channelName`.",
+      "doesNotExist": "https://www.twitch.tv/%1 doesn't exist!"
     },
     "remove": {
       "triggers": ["rem", "remove", "-", "del", "delete"],

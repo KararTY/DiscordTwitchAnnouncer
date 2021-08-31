@@ -295,15 +295,37 @@ const commands = (translate) => [
       // Add streamer to cache.
       const streamerName = message.cmd[1] ? message.cmd[1].toLowerCase().split('/').pop() : false
       if (!streamerName) return false
-      if (cache.guilds[message.gid].findIndex(s => s.name.toLowerCase() === streamerName) > -1) return message.discord.reply(translate.commands.add.alreadyExists)
 
-      cache.guilds[message.gid].push({ name: streamerName })
-      cache.streamersCooldown.set(streamerName.toLowerCase(), Date.now())
-      saveData([{ guild: message.gid, entry: 'streamers', action: 'push', value: { name: streamerName } }])
+      const sanitizedStreamerName = streamerName.toLowerCase().normalize().replace(/[^\w]/g, '')
+      if (cache.guilds[message.gid].findIndex(s => s.name.toLowerCase() === sanitizedStreamerName) > -1) return message.discord.reply(translate.commands.add.alreadyExists)
+
+      await refreshAppToken()
+
+      let user = await fetch(`https://api.twitch.tv/helix/users/?login=${sanitizedStreamerName}`, { headers })
+
+      try {
+        user = await user.json()
+
+        if (user.data.length === 0) {
+          return message.discord.reply(
+            translate.commands.add.doesNotExist
+              .replace('%1', sanitizedStreamerName)
+          )
+        } else user = user.data[0]
+      } catch (error) {
+        return message.discord.reply(
+          translate.twitchError
+            .replace('%1', error.message)
+        )
+      }
+
+      cache.guilds[message.gid].push({ name: sanitizedStreamerName })
+      cache.streamersCooldown.set(sanitizedStreamerName, Date.now())
+      saveData([{ guild: message.gid, entry: 'streamers', action: 'push', value: { name: sanitizedStreamerName } }])
 
       return message.discord.reply(
         `%1 ${data.guilds[message.gid].announcementChannel ? '' : '\n%2'}`
-          .replace('%1', translate.commands.add.message)
+          .replace('%1', translate.commands.add.message.replace('%1', sanitizedStreamerName))
           .replace('%2', translate.commands.add.addAnnouncementChannel)
       )
     }
@@ -575,15 +597,20 @@ async function check () {
     for (let i = 0; i < resData.length; i++) {
       const stream = resData[i]
 
-      // Deprecated API usage!
-      let user = await fetch(`https://api.twitch.tv/kraken/users/${stream.user_id}`, { headers: new fetch.Headers({ Accept: 'application/vnd.twitchtv.v5+json', 'Client-ID': settings.twitch.clientID }) })
+      let user = await fetch(`https://api.twitch.tv/helix/users/?id=${stream.user_id}`, { headers })
 
-      if (user.error) console.error(user.error)
-      else user = await user.json()
+      try {
+        user = (await user.json()).data[0]
+      } catch (error) {
+        console.error(error)
+        user = {
+          profile_image_url: 'https://static-cdn.jtvnw.net/emoticons/v2/80393/default/dark/3.0'
+        }
+      }
 
       streams.push({
         name: stream.user_name.replace(/ /g, ''),
-        avatar: user ? user.logo : null,
+        avatar: user ? user.profile_image_url : null,
         gameID: stream.game_id,
         thumbnail: stream.thumbnail_url.replace('{width}x{height}', '1280x720'),
         type: stream.type,
