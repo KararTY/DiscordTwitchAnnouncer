@@ -433,7 +433,7 @@ const commands = (translate) => [
       saveData([{ guild: message.gid, entry: 'time', value: { locale: message.cmd[1], timeZone: data.guilds[message.gid].time.timeZone } }])
 
       if (message.cmd[2]) {
-        saveData([{ guild: message.gid, entry: 'time', value: { locale: data.guilds[message.gid].time.timeZone, timeZone: message.cmd[2] } }])
+        saveData([{ guild: message.gid, entry: 'time', value: { locale: message.cmd[1], timeZone: message.cmd[2] } }])
       }
 
       return message.discord.reply(translate.commands.timezone.message.replace('%1', moment.utc().locale(data.guilds[message.gid].time.locale).tz(data.guilds[message.gid].time.timeZone).format('LL LTS zz')))
