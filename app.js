@@ -542,6 +542,16 @@ const commands = (translate) => [
         return message.discord.reply(translate.commands.announcementChannel.message)
       } else return message.discord.reply(translate.commands.announcementChannel.noPermissionsForChannel)
     }
+  }),
+  new Command({
+    commandNames: translate.commands.streamers.triggers,
+    helpText: () => translate.commands.streamers.helpText,
+    handler: (message) => {
+      // Returns list of added streamers.
+      const streamers = cache.guilds[message.gid]
+
+      return message.discord.reply(translate.commands.streamers.message.replace('%1', streamers.map(s => s.name).join(', ')))
+    }
   })
 ]
 

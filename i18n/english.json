@@ -107,6 +107,11 @@
       "noPermissionsForChannel": "can not post in that channel. Change permissions, or choose another channel.",
       "streamerDoesNotExist": "streamer doesn't exist!",
       "announcementChannel": "%1's announcement channel is %2"
+    },
+    "streamers": {
+      "triggers": ["streamers", "list"],
+      "helpText": "Shows list of added streamers.",
+      "message": "**List of added streamers:** \n%1"
     }
   },
   "example": "(Example)",
