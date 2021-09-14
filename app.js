@@ -83,7 +83,6 @@ function saveData (d = [{ guild: '', entry: '', action: '', value: 'any' }]) {
 }
 
 const cache = {
-  streamersCooldown: new Map(),
   guilds: []
 }
 const initialization = new Date()
@@ -320,7 +319,6 @@ const commands = (translate) => [
       }
 
       cache.guilds[message.gid].push({ name: sanitizedStreamerName })
-      cache.streamersCooldown.set(sanitizedStreamerName, Date.now())
       saveData([{ guild: message.gid, entry: 'streamers', action: 'push', value: { name: sanitizedStreamerName } }])
 
       return message.discord.reply(
@@ -583,13 +581,12 @@ async function check () {
     if (client.guilds.cache.find(i => i.id === guildID) && data.guilds[guildID].streamers) data.guilds[guildID].streamers.forEach(stream => streamersSet.add(stream.name))
   }
 
-  if ([...streamersSet].length < 1) {
+  const streamersArr = [...streamersSet]
+
+  if (streamersArr.length < 1) {
     setTimeout(check, typeof settings.timer === 'number' ? settings.timer + 5000 : 61000)
     return console.log(translate.noTwitchChannels)
   }
-
-  // Remove streamers that are on cooldown.
-  const streamersArr = [...streamersSet].filter(streamerName => Date.now() >= cache.streamersCooldown.get(streamerName.toLowerCase()))
 
   try {
     const batches = chunks(streamersArr, 100)
@@ -675,14 +672,17 @@ async function check () {
               cache.guilds[guildID][i] = streamInfo
               cache.guilds[guildID][i].game = gameInfo
               cache.guilds[guildID][i].streaming = true
-              cache.streamersCooldown.set(streamInfo.name.toLowerCase(), Date.now() + settings.cooldownTimer)
 
               data.guilds[guildID].streamers[i].lastStartedAt = cache.guilds[guildID][i].started
               saveData([{ guild: guildID, entry: 'streamers', value: data.guilds[guildID].streamers }])
 
               const streamerInfo = data.guilds[guildID].streamers[i]
 
-              announcements.push(sendMessage(guildID, streamerInfo, { cachedImage: cachedImages[cache.guilds[guildID][i].thumbnail], streamInfo, gameInfo })) // Batch announcements.
+              // Batch announcements.
+              // Check for cooldown between streams.
+              if (new Date(started).getTime() > (new Date(lastStartedAt || 0).getTime() + settings.cooldownTimer)) {
+                announcements.push(sendMessage(guildID, streamerInfo, { cachedImage: cachedImages[cache.guilds[guildID][i].thumbnail], streamInfo, gameInfo }))
+              }
             }
           } else cache.guilds[guildID][i].streaming = false // Not live.
         }
@@ -851,7 +851,6 @@ client.once('ready', async () => {
     for (let i = 0; i < guild.streamers.length; i++) {
       const streamer = guild.streamers[i]
       cache.guilds[guildID].push({ name: streamer.name, streaming: false })
-      cache.streamersCooldown.set(streamer.name.toLowerCase(), Date.now() - 1000)
     }
   }
 
