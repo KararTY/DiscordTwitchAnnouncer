@@ -318,8 +318,10 @@ const commands = (translate) => [
         )
       }
 
-      cache.guilds[message.gid].push({ name: sanitizedStreamerName })
-      saveData([{ guild: message.gid, entry: 'streamers', action: 'push', value: { name: sanitizedStreamerName } }])
+      const streamerObj = { name: sanitizedStreamerName, streamerId: user.id }
+
+      cache.guilds[message.gid].push(streamerObj)
+      saveData([{ guild: message.gid, entry: 'streamers', action: 'push', value: streamerObj }])
 
       return message.discord.reply(
         `%1 ${data.guilds[message.gid].announcementChannel ? '' : '\n%2'}`
@@ -573,15 +575,18 @@ async function check () {
     return
   }
 
-  const streamersSet = new Set()
+  const streamersMap = new Map()
 
   const guildIDs = Object.keys(data.guilds)
   for (let i = 0; i < guildIDs.length; i++) {
     const guildID = guildIDs[i]
-    if (client.guilds.cache.find(i => i.id === guildID) && data.guilds[guildID].streamers) data.guilds[guildID].streamers.forEach(stream => streamersSet.add(stream.name))
+    if (client.guilds.cache.find(i => i.id === guildID) && data.guilds[guildID].streamers) data.guilds[guildID].streamers.forEach(stream => streamersMap.set(stream.name, stream.streamerId))
   }
 
-  const streamersArr = [...streamersSet]
+  const streamersArr = []
+  for (const [name, id] of streamersMap) {
+    streamersArr.push({ name, id })
+  }
 
   if (streamersArr.length < 1) {
     setTimeout(check, typeof settings.timer === 'number' ? settings.timer + 5000 : 61000)
@@ -593,7 +598,19 @@ async function check () {
     const resData = []
     for (let index = 0; index < batches.length; index++) {
       const batch = batches[index]
-      const request = await fetch(`https://api.twitch.tv/helix/streams?${batch.map((i, ind) => ind > 0 ? '&user_login=' + i : 'user_login=' + i).join('')}`, { headers })
+      const request = await fetch(
+        `https://api.twitch.tv/helix/streams?${
+          batch.map((i, ind) => {
+            const sym = ind > 0 ? '&' : ''
+            if (i.id) {
+              return sym + 'user_id=' + i.id
+            } else {
+              return sym + 'user_login=' + i.name
+            }
+          }).join('')
+        }`,
+        { headers }
+      )
       const response = await request.json()
 
       if (response.error) throw response
@@ -617,6 +634,7 @@ async function check () {
 
       streams.push({
         name: stream.user_name.replace(/ /g, ''),
+        streamerId: user.id,
         avatar: user ? user.profile_image_url : null,
         gameID: stream.game_id,
         thumbnail: stream.thumbnail_url.replace('{width}x{height}', '1280x720'),
@@ -674,6 +692,7 @@ async function check () {
               cache.guilds[guildID][i].streaming = true
 
               data.guilds[guildID].streamers[i].lastStartedAt = cache.guilds[guildID][i].started
+              data.guilds[guildID].streamers[i].streamerId = streamInfo.streamerId
               saveData([{ guild: guildID, entry: 'streamers', value: data.guilds[guildID].streamers }])
 
               const streamerInfo = data.guilds[guildID].streamers[i]
