@@ -202,7 +202,7 @@ async function sendTestMessage (translate, message, streamer = 'twitchdev') {
   try {
     const embed = streamPreviewEmbed(message.gid, { ...test, imageFileName: null })
     embed.setImage('https://static-cdn.jtvnw.net/ttv-static/404_preview-1920x1080.jpg')
-    await message.discord.channel.send(parseAnnouncementMessage(message.gid, test), { embed })
+    await message.discord.channel.send({ content: parseAnnouncementMessage(message.gid, test), embeds: [embed] })
   } catch (err) {
     if (err.message !== 'Missing Permissions') {
       await message.discord.channel.send(parseAnnouncementMessage(message.gid, test))
@@ -252,7 +252,7 @@ const commands = (translate) => [
           embed.addField(cmd.commandNames.join(', '), typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText)
         }
 
-        await message.discord.channel.send(translate.commands.help.message, { embed })
+        await message.discord.channel.send({ content: translate.commands.help.message, embeds: [embed] })
       } catch (err) {
         if (err.message === 'Missing Permissions') {
           return message.discord.reply(translate.commands.help.message.concat(commands.map(cmd => `\n${typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText}`)))
@@ -711,7 +711,10 @@ const streamPreviewEmbed = (guildID, { imageFileName, streamInfo, gameInfo }) =>
     .setColor(0x6441A4)
     .setTitle(`[${streamInfo.type.toUpperCase()}] ${streamInfo.name}`)
     .setDescription(`**${streamInfo.title}**\n${gameInfo ? gameInfo.name : ''}`)
-    .setFooter(translateDefault(data.guilds[guildID].language).streamStarted.concat(moment.utc(streamInfo.started).locale(data.guilds[guildID].time.locale).tz(data.guilds[guildID].time.timeZone).format('LL LTS zz')), gameInfo ? gameInfo.box_art_url.replace('{width}x{height}', '32x64') : undefined)
+    .setFooter({
+      text: translateDefault(data.guilds[guildID].language).streamStarted.concat(moment.utc(streamInfo.started).locale(data.guilds[guildID].time.locale).tz(data.guilds[guildID].time.timeZone).format('LL LTS zz')),
+      iconURL: gameInfo ? gameInfo.box_art_url.replace('{width}x{height}', '32x64') : undefined
+    })
     .setURL(`http://www.twitch.tv/${streamInfo.name}`)
 
   if (streamInfo.avatar) embed.setThumbnail(streamInfo.avatar)
@@ -743,8 +746,10 @@ async function sendMessage (guildID, streamerInfo, { cachedImage, streamInfo, ga
     let message
     const parsedAnnouncementMessage = parseAnnouncementMessage(guildID, { streamInfo, gameInfo })
     try {
-      message = await client.channels.cache.get(announcementChannel).send(parsedAnnouncementMessage, {
-        embed, files: [{ attachment: cachedImage, name: imageFileName }]
+      message = await client.channels.cache.get(announcementChannel).send({
+        content: parsedAnnouncementMessage,
+        embeds: [embed],
+        files: [{ attachment: cachedImage, name: imageFileName }]
       })
     } catch (err) {
       if (err.message === 'Missing Permissions') {
@@ -770,7 +775,7 @@ async function sendMessage (guildID, streamerInfo, { cachedImage, streamInfo, ga
   return Promise.resolve()
 }
 
-client.on('message', async message => {
+client.on('messageCreate', async message => {
   let allow = false
 
   if (message.guild && message.member) {
@@ -780,7 +785,7 @@ client.on('message', async message => {
       if (data.guilds[message.guild.id].operator.includes(message.author.id)) {
         // If message is from an operator.
         allow = true
-      } else if (message.author.id === message.guild.ownerID) {
+      } else if (message.author.id === message.guild.ownerId) {
         // Or from server owner.
         allow = true
       }
@@ -825,10 +830,13 @@ client.once('ready', async () => {
   console.log(translate.loggedIntoDiscord)
   if (settings.discord.activity[0].length > 0 && settings.discord.activity[1].length > 0) {
     const possibleActivities = ['PLAYING', 'STREAMING', 'LISTENING', 'WATCHING']
-    await client.user.setActivity(settings.discord.activity[1], { type: possibleActivities.includes(settings.discord.activity[0].toUpperCase()) ? settings.discord.activity[0].toUpperCase() : 'PLAYING' }).then(() => console.log(translate.activityHasBeenSet)).catch(console.error)
+    const presence = client.user.setActivity(settings.discord.activity[1], { type: possibleActivities.includes(settings.discord.activity[0].toUpperCase()) ? settings.discord.activity[0].toUpperCase() : 'LISTENING' })
+    console.log(
+      translate.activityHasBeenSet, `[${presence.activities[0].type}] ${presence.activities[0].name}`
+    )
   }
 
-  await client.user.setStatus(client.user.presence.status === 'offline' ? 'online' : client.user.presence.status) // 'online' | 'idle' | 'dnd' | 'invisible'
+  client.user.setStatus(client.user.presence.status === 'offline' ? 'online' : client.user.presence.status) // 'online' | 'idle' | 'dnd' | 'invisible'
 
   client.guilds.cache.forEach(guild => {
     if (!data.guilds[guild.id]) {
