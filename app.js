@@ -247,6 +247,7 @@ const commands = (translate) => [
       try {
         const embed = new MessageEmbed()
           .setTitle(translate.commands.help.availableCommands)
+
         for (let index = 0; index < commands(translate).length; index++) {
           const cmd = commands(translate)[index]
           embed.addField(cmd.commandNames.join(', '), typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText)
@@ -351,7 +352,7 @@ const commands = (translate) => [
   new Command({
     commandNames: translate.commands.channel.triggers,
     helpText: (message) => {
-      const discordChannel = message.discord.guild.channels.cache.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first()
+      const discordChannel = message.discord.guild.channels.cache.find(channel => channel.type === 'GUILD_TEXT' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES'))
       return translate.commands.channel.helpText
         .replace(/%1/g, translate.example)
         .replace(/%2/g, message.prefix)
@@ -505,7 +506,7 @@ const commands = (translate) => [
   new Command({
     commandNames: translate.commands.announcementChannel.triggers,
     helpText: (message) => {
-      const discordChannel = message.discord.guild.channels.cache.filter(channel => channel.type === 'text' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')).first()
+      const discordChannel = message.discord.guild.channels.cache.find(channel => channel.type === 'GUILD_TEXT' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES'))
       return translate.commands.announcementChannel.helpText
         .replace(/%1/g, translate.example)
         .replace(/%2/g, message.prefix)
