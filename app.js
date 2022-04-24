@@ -809,22 +809,28 @@ client.on('messageCreate', async message => {
         // Or from server owner.
         allow = true
       }
-    } else if (message.member.hasPermission((settings.discord.permissionForCommands || 'MANAGE_ROLES'), false, true, true)) {
-      // If message from a guild member with the required permission.
-      allow = true
-    } else if (!message.author.bot && (message.author.id === client.user.id)) {
-      // If from myself (aka self-bot) in a guild.
-      allow = true
+    }
+
+    if (settings.discord.permissionForCommands && settings.discord.permissionForCommands.length > 0) {
+      if (message.member.permissions.has(settings.discord.permissionForCommands || 'MANAGE_ROLES')) {
+        // If message from a guild member with the required permission.
+        allow = true
+      } else if (!message.author.bot && (message.author.id === client.user.id)) {
+        // If from myself (aka self-bot) in a guild.
+        allow = true
+      }
     }
   }
 
   if (allow) {
-    const cleanedMessage = message.content.replace(new RegExp(`^<@${client.user.id}> `), '!')
+    const cleanedMessage = message.content.replace(new RegExp(`^<@${client.user.id}> `), data.guilds[message.guild.id].prefix || '!')
     if (message.cleanContent.startsWith(data.guilds[message.guild.id].prefix || '!') || message.mentions.users.find(u => u.id === client.user.id)) {
       const command = commands(translateDefault(data.guilds[message.guild.id].language)).find(command => command.commandNames.indexOf(cleanedMessage.split(/[ ]+/)[0].toLowerCase().substr(data.guilds[message.guild.id].prefix.length)) > -1)
       if (!command) return
 
       const handled = await command.handler(new Message(message))
+
+      // Only run if handled returns false boolean.
       if (typeof handled === 'boolean' && handled === false) message.reply(command.showHelpText(new Message(message)))
     }
   }
