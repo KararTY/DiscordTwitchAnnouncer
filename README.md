@@ -2,16 +2,21 @@
 
 ## Announces when Twitch channels go live, in Discord
 
+### Announcement
+
+**DTA v4 coming soon, in ESM and with SQLite support!**
+Please check the v4 branch for updates.
+
 ### Updating from 2.x to 3.x
 
-  1. Update your NodeJS version to 12.16.3 or a later version! **(Tested on 12.16.3 and 14.1.0)**
+  1. Update your NodeJS version to 16.14.2 or a later version! **(Tested on 16.14.2)**
   2. Please run `npm install` again to update libraries and dependencies!
   3. Please add `twitch.clientSecret` to `settings.js` file.
   4. **Please do not share** your `settings.js` file and the new `token.json` file. They both include secrets that allow other people to use your authentications.
 
 ### 5 Step Setup
 
-  1. Get NodeJS, v12.x.x or newer **(Tested & Works on v12.16.3)**.
+  1. Get NodeJS, v16.x.x or newer **(Tested & Works on 16.14.2)**.
   2. Git clone or download this repository and then change to the directory in your console/terminal.
   3. Type `npm install` in your console/terminal and wait for dependencies to download and install successfully.
   4. Open up `settings.js` with any text program:
