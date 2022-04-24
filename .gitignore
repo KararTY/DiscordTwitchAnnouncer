@@ -1,16 +1,2 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-
-# Dependency directories
-node_modules/
-
-# Vscode files
-.vscode/
-
-# JSON with data for guilds & streams
-data.json
-
-# Token file
-token.json
+node_modules
+settings.json

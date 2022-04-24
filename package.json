@@ -1,30 +1,21 @@
 {
-  "name": "discordtwitchannouncer",
-  "version": "3.3.0",
-  "description": "Discord bot that announces when Twitch channels go live.",
-  "main": "app.js",
-  "private": true,
+  "name": "donk-announcer",
+  "version": "4.0.0",
+  "description": "",
+  "type": "module",
+  "main": "Index.js",
   "scripts": {
-    "start": "node ./app.js",
-    "lint": "standard --lint",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/KararTY/DiscordTwitchAnnouncer.git"
+    "start": "node ./Index.js",
+    "test": "mocha"
   },
   "author": "Karar Al-Remahy",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/KararTY/DiscordTwitchAnnouncer/issues"
-  },
-  "homepage": "https://github.com/KararTY/DiscordTwitchAnnouncer#readme",
+  "license": "ISC",
   "dependencies": {
-    "discord.js": "^13.6.0",
-    "moment-timezone": "^0.5.34",
-    "node-fetch": "^2.6.7"
+    "better-sqlite3": "^7.5.1"
   },
   "devDependencies": {
-    "standard": "^16.0.4"
+    "chai": "^4.3.6",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^9.2.2"
   }
 }
