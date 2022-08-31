@@ -21,7 +21,7 @@
   "homepage": "https://github.com/KararTY/DiscordTwitchAnnouncer#readme",
   "dependencies": {
     "discord.js": "^13.6.0",
-    "moment-timezone": "^0.5.34",
+    "moment-timezone": "^0.5.35",
     "node-fetch": "^2.6.7"
   },
   "devDependencies": {
