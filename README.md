@@ -4,15 +4,14 @@
 
 ### Announcement
 
-**DTA v4 coming soon, in ESM and with SQLite support!**
-Please check the v4 branch for updates.
+**New DTA rework coming soon, in ESM and with SQLite support!**
+Please check the dev branch for updates.
 
-### Updating from 2.x to 3.x
+### Breaking changes
 
-  1. Update your NodeJS version to 16.14.2 or a later version! **(Tested on 16.14.2)**
-  2. Please run `npm install` again to update libraries and dependencies!
-  3. Please add `twitch.clientSecret` to `settings.js` file.
-  4. **Please do not share** your `settings.js` file and the new `token.json` file. They both include secrets that allow other people to use your authentications.
+* Bot now uses discord.js v14.
+* Prefix commands have been removed, you must now mention the bot to use it.
+* Presence settings no longer work.
 
 ### 5 Step Setup
 
@@ -23,7 +22,7 @@ Please check the v4 branch for updates.
 
 ```js
 module.exports = {
-  timer: 61000, // Is in milliseconds. Default: 61000 ms = 1 minute & 1 second.
+  timer: 61000, // Is in milliseconds. Default: 61000 ms = 1 minute & 1 second. Lower values may not work out well.
   cooldownTimer: 21600000, // Is in milliseconds. Default: 21600000 ms = 6 hours.
   language: 'english', // Default language 'english'. Other languages available in `i18n` folder.
   twitch: {
@@ -31,17 +30,9 @@ module.exports = {
     clientSecret: '' // https://dev.twitch.tv/console/apps
   },
   discord: {
-    defaultPrefix: '!',
     token: '', // https://discordapp.com/developers/applications/me/
-    permissionForCommands: 'MANAGE_ROLES', // https://discordapp.com/developers/docs/topics/permissions
-    message: '@everyone', // The default text on announcement, before the url and stream type. Can be changed with !message command. Default: '@everyone' = '@everyone LIVE! https://twitch.tv/stream'
-    activity: ['LISTENING', 'Twitch API.'] // Status, second entry in array is your custom activity text. If second or first entry is empty, no custom activity will be displayed.
-    /** First entry in the above array can only be the following, and will default to 'PLAYING'.
-     * PLAYING
-     * STREAMING
-     * LISTENING
-     * WATCHING
-     */
+    permissionForCommands: BigInt('0x0000000010000000'), // https://discordapp.com/developers/docs/topics/permissions
+    message: '@everyone' // The default text on announcement, before the url and stream type. Can be changed with !message command. Default: '@everyone' = '@everyone LIVE! https://twitch.tv/stream'
   }
 }
 ```
@@ -54,27 +45,26 @@ After you've started the announcer, invite the bot and go to your discord channe
 
 #### Commands
 
-Available commands:
+Available commands, prefix them with a mention to the bot, e.g. `@DTA help`:
 
-* `!help`
-* `!uptime`
-* `!streamers`
-* (Example) `!timezone sv-SE Europe/Stockholm` Check [IANA BCP 47 Subtag registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry) & [IETF RFC 5646](https://tools.ietf.org/html/rfc5646) for locale tags and [IANA Time Zone Database](https://www.iana.org/time-zones) or [Wikipedia](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for timezones.
-* (Example) `!channel #general`
-  * (Example) `!channel 000000000000000000`
-* (Example) `!operator @User_Name`
-* (Example) `!add Streamer_Name`
-* (Example) `!remove Streamer_Name`
-* (Example) `!reaction 👍`
-* (Example) `!message <streamerName> @here %name% is **%status%** streaming, **%game%**: *%title%* %link%`
+* `help`
+* `uptime`
+* `streamers`
+* (Example) `timezone sv-SE Europe/Stockholm` Check [IANA BCP 47 Subtag registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry) & [IETF RFC 5646](https://tools.ietf.org/html/rfc5646) for locale tags and [IANA Time Zone Database](https://www.iana.org/time-zones) or [Wikipedia](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) for timezones.
+* (Example) `channel #general`
+  * (Example) `channel 000000000000000000`
+* (Example) `operator @User_Name`
+* (Example) `add Streamer_Name`
+* (Example) `remove Streamer_Name`
+* (Example) `reaction 👍`
+* (Example) `message <streamerName> @here %name% is **%status%** streaming, **%game%**: *%title%* %link%`
   * `%name%` Streamer's name
   * `%status%` VOD / LIVE / RERUN?
   * `%game%` Game name
   * `%title%` Stream title
   * `%link%` Twitch link
-* (Example) `!prefix #`
-* (Example) `!language english` Check i18n folder for available languages.
-* (Example) `!announcementchannel Streamer_Name 000000000000000000`
+* (Example) `language english` Check i18n folder for available languages.
+* (Example) `announcementchannel Streamer_Name 000000000000000000`
 
 ### Contributing
 

@@ -1,6 +1,6 @@
 {
   "name": "discordtwitchannouncer",
-  "version": "3.3.0",
+  "version": "4.0.0",
   "description": "Discord bot that announces when Twitch channels go live.",
   "main": "app.js",
   "private": true,
@@ -20,9 +20,9 @@
   },
   "homepage": "https://github.com/KararTY/DiscordTwitchAnnouncer#readme",
   "dependencies": {
-    "discord.js": "^13.6.0",
-    "moment-timezone": "^0.5.34",
-    "node-fetch": "^2.6.7"
+    "discord.js": "^14.6.0",
+    "moment-timezone": "^0.5.38",
+		"got": "^11.8.5"
   },
   "devDependencies": {
     "standard": "^16.0.4"

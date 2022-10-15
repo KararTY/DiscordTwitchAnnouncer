@@ -31,13 +31,13 @@
   "commands": {
     "help": {
       "triggers": ["help", "h"],
-      "helpText": "`%1help <command>` (Replace <command> with a command to get help with a specific command.)",
+      "helpText": "%1 `help <command>` (Replace <command> with a command to get help with a specific command.)",
       "availableCommands": "Available commands",
       "message": "**Help commands:** "
     },
     "uptime": {
       "triggers": ["uptime", "timeup", "online"],
-      "helpText": "`%1uptime` (Shows bot uptime.)",
+      "helpText": "%1 `uptime` (Shows bot uptime.)",
       "message": "Been online for",
       "hoursComma": "hours,",
       "minutesAnd": "minutes and",
@@ -46,7 +46,7 @@
     },
     "add": {
       "triggers": ["add", "+"],
-      "helpText": "%1 `%2add Streamer_Name` (Adds a Twitch stream to the announcer.)",
+      "helpText": "%1 %2 `add Streamer_Name` (Adds a Twitch stream to the announcer.)",
       "gameInfoName": "(DEMO) Game name goes here",
       "streamInfoTitle": "(DEMO) Stream title goes here",
       "streamInfoType": "(DEMO) LIVE/VOD/RERUN...",
@@ -57,52 +57,52 @@
     },
     "remove": {
       "triggers": ["rem", "remove", "-", "del", "delete"],
-      "helpText": "%1 `%2remove Streamer_Name` (Removes a Twitch stream from the announcer.)",
+      "helpText": "%1 %2 `remove Streamer_Name` (Removes a Twitch stream from the announcer.)",
       "doesNotExist": "doesn't exist!",
       "message": "removed streamer from announcer."
     },
     "channel": {
       "triggers": ["ch", "chn", "channel"],
-      "helpText": "%1 `%2channel #%3` or %1 `%2channel %4` (**Required!** Text channel for announcements.)",
+      "helpText": "%1 %2 `channel #%3` or %1 %2 `channel %4` (**Required!** Text channel for announcements.)",
       "message": "changed announcement channel.",
       "noPermissionsForChannel": "can not post in that channel. Change permissions, or choose another channel."
     },
     "operator": {
       "triggers": ["op", "operator"],
-      "helpText": "%1 `%2operator <@%3>` (Toggle operator.)",
+      "helpText": "%1 %2 `operator <@%3>` (Toggle operator.)",
       "message": "%1 operator.",
       "noPermission": "Only guild owner can add and remove operators."
     },
     "reaction": {
       "triggers": ["react", "reaction"],
-      "helpText": "%1 `%2reaction 👍` (Toggles a reaction on the announcement message.)",
+      "helpText": "%1 %2 `reaction 👍` (Toggles a reaction on the announcement message.)",
       "message": "%1 reaction."
     },
     "timezone": {
       "triggers": ["tz", "timezone"],
-      "helpText": "%1 `%2timezone sv-SE Europe/Stockholm` (Check __IANA BCP 47 Subtag registry__ <https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry> & __IETF RFC 5646__ <https://tools.ietf.org/html/rfc5646> for locale tags and __IANA Time Zone Database__ <https://www.iana.org/time-zones> & __Wikipedia__ <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones> for timezones.)",
+      "helpText": "%1 %2 `timezone sv-SE Europe/Stockholm` (Check __IANA BCP 47 Subtag registry__ <https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry> & __IETF RFC 5646__ <https://tools.ietf.org/html/rfc5646> for locale tags and __IANA Time Zone Database__ <https://www.iana.org/time-zones> & __Wikipedia__ <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones> for timezones.)",
       "message": "Time will now be displayed as: %1"
     },
     "message": {
       "triggers": ["msg", "message"],
-      "helpText": "%1 `%2message <streamerName> @everyone %name% **%status%**, with **%game%**: *%title%*` (Change stream announcement message. If *<streamerName>* is filled out, it will change that streamer's announcement message. Make sure to remove the `<>`. Supports *%name%* for streamer's name, *%status%* for type of stream (VOD, LIVE, RERUN), *%game%* for game title and *%title%* for stream title, *%link%* for twitch link.)",
+      "helpText": "%1 %2 `message <streamerName> @everyone %name% **%status%**, with **%game%**: *%title%*` (Change stream announcement message. If *<streamerName>* is filled out, it will change that streamer's announcement message. Make sure to remove the `<>`. Supports *%name%* for streamer's name, *%status%* for type of stream (VOD, LIVE, RERUN), *%game%* for game title and *%title%* for stream title, *%link%* for twitch link.)",
       "message": "Changed announcement message.",
       "messageStreamer": "Changed announcement message for streamer %1."
     },
     "prefix": {
       "triggers": ["pfx", "prefix"],
-      "helpText": "%1 `%2prefix !` (Changes the bot's command prefix.)",
+      "helpText": "%1 %2 `prefix !` (Changes the bot's command prefix.)",
       "message": "Prefix is now `%1`."
     },
     "language": {
       "triggers": ["lang", "language"],
-      "helpText": "%1 `%2language english` (Changes the bot's language.)\n**Available languages:** %3",
+      "helpText": "%1 %2 `language english` (Changes the bot's language.)\n**Available languages:** %3",
       "languageDoesNotExit": "That language does not exist!\n**Available languages:** %1",
       "message": "Changed the language to `%1`!"
     },
     "announcementChannel": {
       "triggers": ["ac", "announcementchannel"],
-      "helpText": "%1 `%2announcementchannel Streamer_Name #%3` or %1 `%2announcementchannel Streamer_Name %4` (Changes announcement channel for specified streamer.)",
+      "helpText": "%1 %2 `announcementchannel Streamer_Name #%3` or %1 %2 `announcementchannel Streamer_Name %4` (Changes announcement channel for specified streamer.)",
       "message": "changed announcement channel for streamer.",
       "noPermissionsForChannel": "can not post in that channel. Change permissions, or choose another channel.",
       "streamerDoesNotExist": "streamer doesn't exist!",
