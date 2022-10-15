@@ -7,7 +7,7 @@
 **New DTA rework coming soon, in ESM and with SQLite support!**
 Please check the dev branch for updates.
 
-### Breaking changes
+### Breaking changes in 4.0.0
 
 * Bot now uses discord.js v14.
 * Prefix commands have been removed, you must now mention the bot to use it.
