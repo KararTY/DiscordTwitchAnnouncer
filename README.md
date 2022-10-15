@@ -4,8 +4,8 @@
 
 ### Announcement
 
-**DTA v4 coming soon, in ESM and with SQLite support!**
-Please check the v4 branch for updates.
+**New DTA rework coming soon, in ESM and with SQLite support!**
+Please check the dev branch for updates.
 
 ### Breaking changes
 
