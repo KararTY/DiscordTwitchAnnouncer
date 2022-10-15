@@ -2,11 +2,11 @@ const fs = require('fs')
 const path = require('path')
 
 const moment = require('moment-timezone')
-const fetch = require('node-fetch')
+const fetch = require('got')
 
-const { Intents, Client, MessageEmbed } = require('discord.js')
+const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, ChannelType, AttachmentBuilder } = require('discord.js')
 const client = new Client({
-  intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS]
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMessageReactions]
 })
 
 const settings = require('./settings.js')
@@ -92,12 +92,11 @@ const defaultGuildData = {
   reactions: [],
   message: '@everyone %name% **%status%**!',
   time: { locale: Intl.DateTimeFormat().resolvedOptions().locale, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
-  prefix: '!',
   language: settings.language || 'english'
 }
 
 let disconnect = false
-let headers = new fetch.Headers({})
+let headers = {}
 let tokenExpirationDate
 
 // Prototypal. Good for now.
@@ -133,18 +132,21 @@ async function refreshAppToken () {
       tokenExpirationDate = tokenJSON.expiration
 
       console.log(translate.usingExistingToken, new Date(tokenJSON.expiration).toUTCString())
-      headers = new fetch.Headers({
+      headers = {
         Authorization: `Bearer ${tokenJSON.superSecret}`,
         'Client-ID': settings.twitch.clientID
-      })
+      }
 
       // Validate token
       try {
-        const res = await fetch('https://id.twitch.tv/oauth2/validate', {
-          headers: new fetch.Headers({
+        const request = await fetch('https://id.twitch.tv/oauth2/validate', {
+          headers: {
             Authorization: `OAuth ${tokenJSON.superSecret}`
-          })
-        }).then(res => res.json())
+          },
+          responseType: 'json'
+        })
+
+        const res = request.body
 
         if (res.client_id !== settings.twitch.clientID) throw new Error('Missmatch')
       } catch (err) {
@@ -159,14 +161,16 @@ async function refreshAppToken () {
 
   if (Date.now() >= (tokenExpirationDate || 0)) {
     try {
-      const res = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${settings.twitch.clientID}&client_secret=${settings.twitch.clientSecret}&grant_type=client_credentials`, { method: 'POST' }).then(res => res.json())
+      const request = await fetch(`https://id.twitch.tv/oauth2/token?client_id=${settings.twitch.clientID}&client_secret=${settings.twitch.clientSecret}&grant_type=client_credentials`, { method: 'POST', responseType: 'json' })
+
+      const res = request.body
 
       const expirationDate = Date.now() + (res.expires_in * 1000)
 
-      headers = new fetch.Headers({
+      headers = {
         Authorization: `Bearer ${res.access_token}`,
         'Client-ID': settings.twitch.clientID
-      })
+      }
 
       console.log(translate.wroteTokenToDisk)
       fs.writeFileSync(tokenFilePath, JSON.stringify({
@@ -212,10 +216,9 @@ async function sendTestMessage (translate, message, streamer = 'twitchdev') {
 
 class Message {
   constructor (message) {
-    this.cmd = message.content.replace(new RegExp(`^<@${client.user.id}> `), '!').split(/[ ]+/)
+    this.cmd = message.content.replace(new RegExp(`^<@${client.user.id}>`), '').trim().split(/[ ]+/)
     this.discord = message
     this.gid = message.guild.id
-    this.prefix = data.guilds[this.gid].prefix || '!'
   }
 }
 
@@ -235,7 +238,7 @@ const commands = (translate) => [
   new Command({
     commandNames: translate.commands.help.triggers,
     helpText: (message) => {
-      return translate.commands.help.helpText.replace('%1', message.prefix)
+      return translate.commands.help.helpText.replace('%1', `<@${client.user.id}>`)
     },
     handler: async (message) => {
       // Help command.
@@ -245,13 +248,10 @@ const commands = (translate) => [
       }
 
       try {
-        const embed = new MessageEmbed()
+        const embed = new EmbedBuilder()
           .setTitle(translate.commands.help.availableCommands)
 
-        for (let index = 0; index < commands(translate).length; index++) {
-          const cmd = commands(translate)[index]
-          embed.addField(cmd.commandNames.join(', '), typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText)
-        }
+        embed.addFields(commands(translate).map(cmd => ({ name: cmd.commandNames.join(', '), value: typeof cmd.helpText === 'function' ? cmd.helpText(message) : cmd.helpText })))
 
         await message.discord.channel.send({ content: translate.commands.help.message, embeds: [embed] })
       } catch (err) {
@@ -264,7 +264,7 @@ const commands = (translate) => [
   new Command({
     commandNames: translate.commands.uptime.triggers,
     helpText: (message) => {
-      return translate.commands.uptime.helpText.replace('%1', message.prefix)
+      return translate.commands.uptime.helpText.replace('%1', `<@${client.user.id}>`)
     },
     handler: (message) => {
       // Uptime command.
@@ -289,7 +289,7 @@ const commands = (translate) => [
     helpText: (message) => {
       return translate.commands.add.helpText
         .replace('%1', translate.example)
-        .replace('%2', message.prefix)
+        .replace('%2', `<@${client.user.id}>`)
     },
     handler: async (message) => {
       // Add streamer to cache.
@@ -301,10 +301,11 @@ const commands = (translate) => [
 
       await refreshAppToken()
 
-      let user = await fetch(`https://api.twitch.tv/helix/users/?login=${sanitizedStreamerName}`, { headers })
+      const request = await fetch(`https://api.twitch.tv/helix/users/?login=${sanitizedStreamerName}`, { headers, responseType: 'json' })
 
+      let user
       try {
-        user = await user.json()
+        user = await request.body
 
         if (user.data.length === 0) {
           return message.discord.reply(
@@ -336,7 +337,7 @@ const commands = (translate) => [
     helpText: (message) => {
       return translate.commands.remove.helpText
         .replace('%1', translate.example)
-        .replace('%2', message.prefix)
+        .replace('%2', `<@${client.user.id}>`)
     },
     handler: (message) => {
       // Remove streamer from cache.
@@ -352,10 +353,10 @@ const commands = (translate) => [
   new Command({
     commandNames: translate.commands.channel.triggers,
     helpText: (message) => {
-      const discordChannel = message.discord.guild.channels.cache.find(channel => channel.type === 'GUILD_TEXT' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES'))
+      const discordChannel = message.discord.guild.channels.cache.find(channel => channel.type === ChannelType.GuildText && channel.memberPermissions(message.discord.guild.members.me).has(PermissionsBitField.Flags.SendMessages))
       return translate.commands.channel.helpText
         .replace(/%1/g, translate.example)
-        .replace(/%2/g, message.prefix)
+        .replace(/%2/g, `<@${client.user.id}>`)
         .replace('%3', discordChannel.name)
         .replace('%4', discordChannel.id)
     },
@@ -364,7 +365,7 @@ const commands = (translate) => [
       if (!message.cmd[1]) return false
 
       const channelID = message.cmd[1].replace(/[^0-9]/g, '')
-      if (message.discord.guild.channels.cache.get(channelID) && message.discord.guild.channels.cache.get(channelID).memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')) {
+      if (message.discord.guild.channels.cache.get(channelID) && message.discord.guild.channels.cache.get(channelID).memberPermissions(message.discord.guild.members.me).has(PermissionsBitField.Flags.SendMessages)) {
         saveData([{ guild: message.gid, entry: 'announcementChannel', value: channelID }])
         return message.discord.reply(translate.commands.channel.message)
       } else return message.discord.reply(translate.commands.channel.noPermissionsForChannel)
@@ -375,7 +376,7 @@ const commands = (translate) => [
     helpText: (message) => {
       return translate.commands.operator.helpText
         .replace('%1', translate.example)
-        .replace('%2', message.prefix)
+        .replace('%2', `<@${client.user.id}>`)
         .replace('%3', message.discord.author.id)
     },
     handler: (message) => {
@@ -400,7 +401,7 @@ const commands = (translate) => [
     helpText: (message) => {
       return translate.commands.reaction.helpText
         .replace('%1', translate.example)
-        .replace('%2', message.prefix)
+        .replace('%2', `<@${client.user.id}>`)
     },
     handler: (message) => {
       if (!message.cmd[1]) return false
@@ -426,7 +427,7 @@ const commands = (translate) => [
     helpText: (message) => {
       return translate.commands.timezone.helpText
         .replace('%1', translate.example)
-        .replace('%2', message.prefix)
+        .replace('%2', `<@${client.user.id}>`)
     },
     handler: (message) => {
       if (!message.cmd[1]) return false
@@ -445,7 +446,7 @@ const commands = (translate) => [
     helpText: (message) => {
       return translate.commands.message.helpText
         .replace('%1', translate.example)
-        .replace('%2', message.prefix)
+        .replace('%2', `<@${client.user.id}>`)
     },
     handler: async (message) => {
       // Change stream announcement message.
@@ -470,25 +471,11 @@ const commands = (translate) => [
     }
   }),
   new Command({
-    commandNames: translate.commands.prefix.triggers,
-    helpText: (message) => {
-      return translate.commands.prefix.helpText
-        .replace('%1', translate.example)
-        .replace('%2', message.prefix)
-    },
-    handler: (message) => {
-      if (!message.cmd[1]) return false
-
-      saveData([{ guild: message.gid, entry: 'prefix', value: message.cmd[1] }])
-      return message.discord.reply(translate.commands.prefix.message.replace('%1', message.cmd[1]))
-    }
-  }),
-  new Command({
     commandNames: translate.commands.language.triggers,
     helpText: (message) => {
       return translate.commands.language.helpText
         .replace('%1', translate.example)
-        .replace('%2', message.prefix)
+        .replace('%2', `<@${client.user.id}>`)
         .replace('%3', Object.keys(translations).join(', '))
     },
     handler: (message) => {
@@ -506,10 +493,10 @@ const commands = (translate) => [
   new Command({
     commandNames: translate.commands.announcementChannel.triggers,
     helpText: (message) => {
-      const discordChannel = message.discord.guild.channels.cache.find(channel => channel.type === 'GUILD_TEXT' && channel.memberPermissions(message.discord.guild.me).has('SEND_MESSAGES'))
+      const discordChannel = message.discord.guild.channels.cache.find(channel => channel.type === ChannelType.GuildText && channel.memberPermissions(message.discord.guild.members.me).has(PermissionsBitField.Flags.SendMessages))
       return translate.commands.announcementChannel.helpText
         .replace(/%1/g, translate.example)
-        .replace(/%2/g, message.prefix)
+        .replace(/%2/g, `<@${client.user.id}>`)
         .replace('%3', discordChannel.name)
         .replace('%4', discordChannel.id)
     },
@@ -531,7 +518,7 @@ const commands = (translate) => [
       }
 
       channelID = channelID.replace(/[^0-9]/g, '')
-      if (message.discord.guild.channels.cache.get(channelID) && message.discord.guild.channels.cache.get(channelID).memberPermissions(message.discord.guild.me).has('SEND_MESSAGES')) {
+      if (message.discord.guild.channels.cache.get(channelID) && message.discord.guild.channels.cache.get(channelID).memberPermissions(message.discord.guild.members.me).has(PermissionsBitField.Flags.SendMessages)) {
         if (channelID === data.guilds[message.gid].announcementChannel) {
           delete data.guilds[message.gid].streamers[foundIndex].announcementChannel
           saveData([{ guild: message.gid, entry: 'streamers', value: data.guilds[message.gid].streamers }])
@@ -600,19 +587,18 @@ async function check () {
     for (let index = 0; index < batches.length; index++) {
       const batch = batches[index]
       const request = await fetch(
-        `https://api.twitch.tv/helix/streams?${
-          batch.map((i, ind) => {
-            const sym = ind > 0 ? '&' : ''
-            if (i.id) {
-              return sym + 'user_id=' + i.id
-            } else {
-              return sym + 'user_login=' + i.name
-            }
-          }).join('')
+        `https://api.twitch.tv/helix/streams?${batch.map((i, ind) => {
+          const sym = ind > 0 ? '&' : ''
+          if (i.id) {
+            return sym + 'user_id=' + i.id
+          } else {
+            return sym + 'user_login=' + i.name
+          }
+        }).join('')
         }`,
-        { headers }
+        { headers, responseType: 'json' }
       )
-      const response = await request.json()
+      const response = request.body
 
       if (response.error) throw response
       else resData.push(...response.data)
@@ -622,10 +608,11 @@ async function check () {
     for (let i = 0; i < resData.length; i++) {
       const stream = resData[i]
 
-      let user = await fetch(`https://api.twitch.tv/helix/users/?id=${stream.user_id}`, { headers })
+      const request = await fetch(`https://api.twitch.tv/helix/users/?id=${stream.user_id}`, { headers, responseType: 'json' })
 
+      let user
       try {
-        user = (await user.json()).data[0]
+        user = request.body.data[0]
       } catch (error) {
         console.error(error)
         user = {
@@ -653,21 +640,22 @@ async function check () {
       const gamesChunk = chunks(games, 100)
       for (let index = 0; index < gamesChunk.length; index++) {
         const batch = gamesChunk[index]
-        promise.push(fetch(`https://api.twitch.tv/helix/games?${batch.map((i, ind) => ind > 0 ? '&id=' + i : 'id=' + i).join('')}`, { headers }).then(res => res.json()))
+        promise.push(fetch(`https://api.twitch.tv/helix/games?${batch.map((i, ind) => ind > 0 ? '&id=' + i : 'id=' + i).join('')}`, { headers, responseType: 'json' }))
       }
 
       for (let index = 0; index < streams.length; index++) {
         const s = streams[index]
         const imageName = s.thumbnail
-        const res = await fetch(s.thumbnail).then(res => res.buffer())
-        cachedImages[imageName] = res
+        const res = await fetch(s.thumbnail, { responseType: 'buffer' })
+        cachedImages[imageName] = res.body
       }
     }
 
     let streamedGames
 
     try {
-      streamedGames = await Promise.all(promise)
+      const requests = await Promise.all(promise)
+      streamedGames = requests.map(req => req.body)
     } catch (error) {
       console.error(error)
     }
@@ -678,7 +666,7 @@ async function check () {
       if (data.guilds[guildID].announcementChannel) {
         for (let i = 0; i < cache.guilds[guildID].length; i++) {
           if (streams.map(s => s.name.toLowerCase()).includes(cache.guilds[guildID][i].name ? cache.guilds[guildID][i].name.toLowerCase() : '')) {
-          // Make sure this specific stream hasn't been already announced.
+            // Make sure this specific stream hasn't been already announced.
             const isStreaming = cache.guilds[guildID][i].streaming
             const started = streams.find(s => s.name.toLowerCase() === cache.guilds[guildID][i].name.toLowerCase()).started
             const lastStartedAt = data.guilds[guildID].streamers.find(s => s.name.toLowerCase() === cache.guilds[guildID][i].name.toLowerCase()).lastStartedAt
@@ -727,7 +715,7 @@ async function check () {
 }
 
 const streamPreviewEmbed = (guildID, { imageFileName, streamInfo, gameInfo }) => {
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setColor(0x6441A4)
     .setTitle(`[${streamInfo.type.toUpperCase()}] ${streamInfo.name}`)
     .setDescription(`**${streamInfo.title}**\n${gameInfo ? gameInfo.name : ''}`)
@@ -765,11 +753,12 @@ async function sendMessage (guildID, streamerInfo, { cachedImage, streamInfo, ga
   if (client.channels.cache.get(announcementChannel)) {
     let message
     const parsedAnnouncementMessage = parseAnnouncementMessage(guildID, { streamInfo, gameInfo })
+    const attachment = new AttachmentBuilder(cachedImage, { name: imageFileName })
     try {
       message = await client.channels.cache.get(announcementChannel).send({
         content: parsedAnnouncementMessage,
         embeds: [embed],
-        files: [{ attachment: cachedImage, name: imageFileName }]
+        files: [attachment]
       })
     } catch (err) {
       if (err.message === 'Missing Permissions') {
@@ -811,8 +800,8 @@ client.on('messageCreate', async message => {
       }
     }
 
-    if (settings.discord.permissionForCommands && settings.discord.permissionForCommands.length > 0) {
-      if (message.member.permissions.has(settings.discord.permissionForCommands || 'MANAGE_ROLES')) {
+    if (settings.discord.permissionForCommands) {
+      if (message.member.permissions.has(settings.discord.permissionForCommands || PermissionsBitField.Flags.ManageRoles)) {
         // If message from a guild member with the required permission.
         allow = true
       } else if (!message.author.bot && (message.author.id === client.user.id)) {
@@ -823,9 +812,9 @@ client.on('messageCreate', async message => {
   }
 
   if (allow) {
-    const cleanedMessage = message.content.replace(new RegExp(`^<@${client.user.id}> `), data.guilds[message.guild.id].prefix || '!')
-    if (message.cleanContent.startsWith(data.guilds[message.guild.id].prefix || '!') || message.mentions.users.find(u => u.id === client.user.id)) {
-      const command = commands(translateDefault(data.guilds[message.guild.id].language)).find(command => command.commandNames.indexOf(cleanedMessage.split(/[ ]+/)[0].toLowerCase().substr(data.guilds[message.guild.id].prefix.length)) > -1)
+    const cleanedMessage = message.content.replace(new RegExp(`^<@${client.user.id}>`), '').trim()
+    if (message.content.startsWith(message.mentions.users.find(u => u.id === client.user.id))) {
+      const command = commands(translateDefault(data.guilds[message.guild.id].language)).find(command => command.commandNames.indexOf(cleanedMessage.split(/[ ]+/)[0].toLowerCase()) > -1)
       if (!command) return
 
       const handled = await command.handler(new Message(message))
@@ -854,15 +843,6 @@ client.on('guildDelete', guild => {
 
 client.once('ready', async () => {
   console.log(translate.loggedIntoDiscord)
-  if (settings.discord.activity[0].length > 0 && settings.discord.activity[1].length > 0) {
-    const possibleActivities = ['PLAYING', 'STREAMING', 'LISTENING', 'WATCHING']
-    const presence = client.user.setActivity(settings.discord.activity[1], { type: possibleActivities.includes(settings.discord.activity[0].toUpperCase()) ? settings.discord.activity[0].toUpperCase() : 'LISTENING' })
-    console.log(
-      translate.activityHasBeenSet, `[${presence.activities[0].type}] ${presence.activities[0].name}`
-    )
-  }
-
-  client.user.setStatus(client.user.presence.status === 'offline' ? 'online' : client.user.presence.status) // 'online' | 'idle' | 'dnd' | 'invisible'
 
   client.guilds.cache.forEach(guild => {
     if (!data.guilds[guild.id]) {
@@ -871,7 +851,6 @@ client.once('ready', async () => {
       if (!data.guilds[guild.id].reactions) saveData([{ guild: guild.id, entry: 'reactions', value: [] }])
       if (!data.guilds[guild.id].time) saveData([{ guild: guild.id, entry: 'time', value: { locale: Intl.DateTimeFormat().resolvedOptions().locale, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone } }])
       if (!data.guilds[guild.id].message) saveData([{ guild: guild.id, entry: 'message', value: '@everyone %name% **%status%**!' }])
-      if (!data.guilds[guild.id].prefix) saveData([{ guild: guild.id, entry: 'prefix', value: settings.discord.defaultPrefix }])
       if (!data.guilds[guild.id].language) saveData([{ guild: guild.id, entry: 'language', value: settings.language || 'english' }])
     }
   })
