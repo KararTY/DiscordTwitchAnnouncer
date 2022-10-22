@@ -52,7 +52,7 @@
       "streamInfoType": "(DEMO) LIVE/VOD/RERUN...",
       "alreadyExists": "already exists!",
       "message": "added https://www.twitch.tv/%1 to announcer.",
-      "addAnnouncementChannel": "Don't forget to add announcement channel with `!channel #channelName`.",
+      "addAnnouncementChannel": "Don't forget to add announcement channel with %1 `channel #channelName`.",
       "doesNotExist": "https://www.twitch.tv/%1 doesn't exist!"
     },
     "remove": {

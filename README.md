@@ -7,20 +7,24 @@
 **New DTA rework coming soon, in ESM and with SQLite support!**
 Please check the dev branch for updates.
 
-### Breaking changes in 4.0.0
+### Breaking changes in 4.0.0 & 5.0.0
 
-* Bot now uses discord.js v14.
-* Prefix commands have been removed, you must now mention the bot to use it.
-* Presence settings no longer work.
+* **5.0.0:** Presence settings reworked. Check out the new `settings.cjs` file for the new configuration.
+* **5.0.0:** `settings.js` file renamed to `settings.cjs`
+* **4.0.0:** Bot now uses discord.js v14.
+* **4.0.0:** Prefix commands have been removed, you must now mention the bot to use it.
+* ~~**4.0.0:** Presence settings no longer work.~~
 
 ### 5 Step Setup
 
   1. Get NodeJS, v16.x.x or newer **(Tested & Works on 16.14.2)**.
   2. Git clone or download this repository and then change to the directory in your console/terminal.
   3. Type `npm install` in your console/terminal and wait for dependencies to download and install successfully.
-  4. Open up `settings.js` with any text program:
+  4. Open up `settings.cjs` with any text program:
 
 ```js
+const { ActivityType, PresenceUpdateStatus } = require("discord.js");
+
 module.exports = {
   timer: 61000, // Is in milliseconds. Default: 61000 ms = 1 minute & 1 second. Lower values may not work out well.
   cooldownTimer: 21600000, // Is in milliseconds. Default: 21600000 ms = 6 hours.
@@ -32,8 +36,16 @@ module.exports = {
   discord: {
     token: '', // https://discordapp.com/developers/applications/me/
     permissionForCommands: BigInt('0x0000000010000000'), // https://discordapp.com/developers/docs/topics/permissions
-    message: '@everyone' // The default text on announcement, before the url and stream type. Can be changed with !message command. Default: '@everyone' = '@everyone LIVE! https://twitch.tv/stream'
-  }
+    message: '@everyone', // The default text on announcement, before the url and stream type. Can be changed with !message command. Default: '@everyone' = '@everyone LIVE! https://twitch.tv/stream'
+    activity: {
+      activities: [{
+        name: 'TWITCH API',
+        type: ActivityType.Watching, // .Listening, .Competing, .Playing, .Streaming, .Watching
+      }],
+      status: PresenceUpdateStatus.Online, // .Online, .Idle, .Invisible, .DoNotDisturb, .Offline
+    },
+  },
+  log: true // Logs changes done to data.json into logs.txt.
 }
 ```
 
@@ -68,6 +80,6 @@ Available commands, prefix them with a mention to the bot, e.g. `@DTA help`:
 
 ### Contributing
 
-Fork project & Send a pull request. Use eslint, thanks.
+Fork project & Send a pull request. Use standard lint, thanks.
 
 ### License MIT

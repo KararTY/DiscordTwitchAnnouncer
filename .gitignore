@@ -14,3 +14,10 @@ data.json
 
 # Token file
 token.json
+
+# Settings file
+settings.js
+settings.cjs
+
+# logs
+logs.txt
