@@ -1,13 +1,20 @@
 import fs from 'fs'
 import util from 'util'
 import settings from './settings.js'
+import translate from './translation.js'
 
-const logsLocation = new URL('../logs.txt', import.meta.url)
+const logsDirLocation = new URL('../dta-logs', import.meta.url)
+
+if (!fs.existsSync(logsDirLocation)) {
+  fs.mkdirSync(logsDirLocation)
+}
+
+const logsLocation = new URL(`../dta-logs/logs-${Date.now()}.txt`, import.meta.url)
 
 // Create logs.txt if it doesn't exist.
 if (!fs.existsSync(logsLocation)) {
   fs.writeFileSync(logsLocation, '')
-  console.log(logsLocation.createdDataJSON)
+  console.log(translate.createdLogsFolder)
 }
 
 const logsWriter = fs.createWriteStream(logsLocation, 'utf-8')

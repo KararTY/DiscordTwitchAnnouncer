@@ -20,4 +20,4 @@ settings.js
 settings.cjs
 
 # logs
-logs.txt
+dta-logs/

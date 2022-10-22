@@ -116,5 +116,6 @@
   },
   "example": "(Example)",
   "added": "added",
-  "removed": "removed"
+  "removed": "removed",
+  "createdLogsFolder": "Created ./dta-logs/ folder."
 }
