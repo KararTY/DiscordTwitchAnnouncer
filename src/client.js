@@ -74,6 +74,8 @@ client.on('guildDelete', guild => {
 client.once('ready', async () => {
   log(translate.loggedIntoDiscord)
 
+  client.user.setPresence(settings.discord.activity)
+
   client.guilds.cache.forEach(guild => {
     if (!data().guilds[guild.id]) {
       saveData([{ guild: guild.id, action: 'addGuild' }])
