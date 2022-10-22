@@ -26,7 +26,10 @@ export default class OperatorCommand extends Command {
    * @param {Msg} message
    */
   async handler (message) {
-    if (message.discord.author.id !== message.discord.guild.owner.id) return message.discord.reply(this.translate.commands.operator.noPermission)
+    if (message.discord.author.id !== message.discord.guild.ownerId) {
+      return message.discord.reply(this.translate.commands.operator.noPermission)
+    }
+
     if (!message.cmd[1]) return false
 
     const operator = message.cmd[1].replace(/[^0-9]/g, '')
