@@ -11,7 +11,8 @@ module.exports = {
     token: '', // https://discordapp.com/developers/applications/me/
     permissionForCommands: BigInt('0x0000000010000000'), // https://discordapp.com/developers/docs/topics/permissions
     message: '@everyone' // The default text on announcement, before the url and stream type. Can be changed with !message command. Default: '@everyone' = '@everyone LIVE! https://twitch.tv/stream'
-  }
+  },
+  log: true // Logs changes done to data.json into logs.txt.
 }
 
 /**
