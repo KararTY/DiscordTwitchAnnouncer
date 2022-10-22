@@ -2,7 +2,7 @@ import fetch from 'got'
 
 import settings from './settings.js'
 import client, { disconnect } from './client.js'
-import data, { cache, saveData } from './data.js'
+import data, { cache, loadData, saveData } from './data.js'
 import { headers, refreshAppToken } from './token.js'
 import translate from './translation.js'
 import { sendMessage } from './message.js'
@@ -20,7 +20,7 @@ function chunks (arr, n) {
 
 export async function check () {
   try {
-    data() // Try loading data.
+    data().guilds = loadData().guilds
   } catch (err) {
     console.log(translate.genericDataJSONErrorRetry)
     setTimeout(check, 60000)

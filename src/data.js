@@ -5,13 +5,13 @@ import settings from './settings.js'
 
 const fileLocation = new URL('../data.json', import.meta.url)
 
-// Create data().json if it doesn't exist.
+// Create data.json if it doesn't exist.
 if (!fs.existsSync(fileLocation)) {
   fs.writeFileSync(fileLocation, JSON.stringify({ guilds: {} }, null, 2))
   console.log(translate.createdDataJSON)
 }
 
-const data = () => loadData()
+const cacheData = loadData()
 
 export function loadData () {
   return JSON.parse(fs.readFileSync(fileLocation, 'utf-8'))
@@ -31,7 +31,7 @@ export function saveData (d = [{ guild: '', entry: '', action: '', value: 'any' 
           dataOnFile.guilds[object.guild][object.entry].splice(object.value[0], object.value[1])
           break
         case 'addGuild':
-          // Default guild data().
+          // Default guild data.
           dataOnFile.guilds[object.guild] = {
             streamers: [],
             announcementChannel: null,
@@ -53,6 +53,8 @@ export function saveData (d = [{ guild: '', entry: '', action: '', value: 'any' 
     }
   }
 
+  cacheData.guilds = dataOnFile.guilds
+
   return fs.writeFileSync(fileLocation, JSON.stringify(dataOnFile, null, 2))
 }
 
@@ -61,5 +63,7 @@ const c = {
 }
 
 export const cache = () => c
+
+export const data = () => cacheData
 
 export default data
