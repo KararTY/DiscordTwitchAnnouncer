@@ -7,11 +7,12 @@
 **New DTA rework coming soon, in ESM and with SQLite support!**
 Please check the dev branch for updates.
 
-### Breaking changes in 4.0.0
+### Breaking changes in 4.0.0 & 5.0.0
 
-* Bot now uses discord.js v14.
-* Prefix commands have been removed, you must now mention the bot to use it.
-* Presence settings no longer work.
+* **5.0.0:** settings.js file renamed to settings.cjs
+* **4.0.0:** Bot now uses discord.js v14.
+* **4.0.0:** Prefix commands have been removed, you must now mention the bot to use it.
+* **4.0.0:** Presence settings no longer work.
 
 ### 5 Step Setup
 
