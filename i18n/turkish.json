@@ -1,102 +1,120 @@
 {
-  "noDiscordToken": "Herhangi bir discord token algılanamadı.",
-  "noTwitchClientID": "Twitch istemci kimliği algılanamadı.",
-  "includeTwitchClientSecret": "Önceki bir sürümden güncelleme yapıyorsanız, lütfen settings.js dosyasında 'twitch.clientSecret' alanının bulunduğundan emin olun.",
-  "noTwitchClientSecret": "Hiçbir Twitch istemcisi sırrı sağlanmadı.",
+  "noDiscordToken": "Discord kimlik Token sağlanmadı..",
+  "noTwitchClientID": "Hiçbir Twitch Client ID sağlanmadı.",
+  "includeTwitchClientSecret": "Önceki bir sürümden güncelleme yapıyorsanız, lütfen alanın 'twitch.clientSecret' settings.js'de var.",
+  "noTwitchClientSecret": "Hiçbir Twitch secret sağlanmadı.",
   "createdDataJSON": "data.json oluşturuldu.",
-  "usingExistingToken": "Mevcut jetonu kullanma süresi. Jetonun süresi: %s.",
-  "missmatchToken": "İstemci Twitch jetonu gizli, ferahlatıcı jetonla eşleşmiyor!",
-  "invalidTokenResponse": "Geçersiz token, tokeni yenile!",
-  "wroteTokenToDisk": "Jeton diske yazıldu. NOT: token.json'u HERKESLE PAYLAŞMAYIN.",
-  "genericTokenError": "Twitch OAuth jetonunu almaya çalışırken bir şeyler ters gitti, müşteri kimliğinizi ve settings.js'deki sırrınızı doğrulayın!",
-  "genericDataJSONErrorRetry": "Data.json dosyanızla ilgili bir sorun oluştu! 1 dakika içinde tekrar deneniyor ...",
-  "disconnectedDiscord": "Discord ile bağlantı kesilmiş gibi görünüyor. Twitch akışlarını kontrol etmiyor. 3 saniye içinde tekrar deneniyor ...",
-  "noTwitchChannels": "Twitch kanalı yok. Biraz ekleyin!",
-  "announcedStreams": "Tüm yayınlar başarıyla duyuruldu.",
-  "throttledByTwitch": "Twitch tarafından boğuldu! Settings.js'de zamanlayıcıyı artırın ve yeniden başlatın!",
-  "twitchThrottleMessage": "\nTwitch boğma mesajı: %s",
-  "streamStarted": "Yayın Başladı ",
-  "unknownGame": "Bilinmeyen oyun",
-  "inGuild": "sunucuda",
-  "announcedInOverAtGuild": "%s sunucusunda %s kanalında %s 'yı duyurdu'",
-  "announcementChannelDoesNotExist": "Duyuru yapılamadı. Duyuru kanalı, %s , %s sunucusunda mevcut değil",
+  "usingExistingToken": "Mevcut belirteci kullanma. Jetonun süresi doluyor %s.",
+  "missmatchToken": "İstemci Kimliği Twitch belirteci sırrıyla eşleşmedi, belirteci yeniliyor!",
+  "invalidTokenResponse": "Geçersiz yanıt, yenileme belirteci!",
+  "wroteTokenToDisk": "Diske jeton yazdı. NOT: token.json'u KİMSE İLE PAYLAŞMAYIN.",
+  "genericTokenError": "Twitch OAuth jetonunu almaya çalışırken bir şeyler ters gitti, settings.js'de müşteri kimliğinizi ve sırrınızı doğrulayın!",
+  "genericDataJSONErrorRetry": "data.json dosyanızda bir sorun var! 1 dakika içinde yeniden deneniyor...",
+  "disconnectedDiscord": "Discord'un bağlantısı kesilmiş görünüyor. Twitch akışlarını kontrol etmiyor. 3 saniye içinde yeniden deneniyor...",
+  "noTwitchChannels": "Twitch kanalları yok. biraz ekle!",
+  "announcedStreams": "Tüm yayınları başarıyla duyurdu.",
+  "throttledByTwitch": "Twitch tarafından kısıldı! settings.js'de zamanlayıcıyı artırın ve yeniden başlatın!",
+  "twitchThrottleMessage": "\nTwitch gaz kelebeği mesajı: %s",
+  "streamStarted": "Yayın başladı ",
+  "unknownGame": "bilinmeyen oyun",
+  "inGuild": "sunucuda ",
+  "announcedInOverAtGuild": "%s sunucusunda %s olarak duyuru yapıldı",
+  "announcementChannelDoesNotExist": "Duyurulamadı. Duyuru kanalı, %s, %s sunucusunda mevcut değil",
   "addedGuild": "Listeye sunucu eklendi!",
-  "removedGuild": "Bir sunucu listeden kaldırıldı!",
-  "loggedIntoDiscord": "Discord'da oturum açıldı.",
-  "activityHasBeenSet": "Bot durumu ayarlandı.",
-  "reconnectingToDiscord": "Discord'a tekrar bağlanılıyor...",
-  "reconnectedToDiscord": "Discord'a yeniden bağlandı. Tamamen çalışıyor.",
+  "removedGuild": "Listeden bir sunucu kaldırıldı!",
+  "loggedIntoDiscord": "Discord'a giriş yaptım.",
+  "activityHasBeenSet": "Etkinlik ayarlandı.",
+  "reconnectingToDiscord": "Discord'a yeniden bağlanıyor...",
+  "reconnectedToDiscord": "Discord'a yeniden bağlandı. Tüm işlevsel.",
+  "includeCooldownTimerWarning": "Yakın zamanda yapılan bir güncelleme, 'IRL akışları' sırasında istenmeyen postaları azaltmak için her duyuru için bir bekleme süresi getirdi, lütfen settings.json dosyanıza 'cooldownTimer: 21600000' ekleyin. Şimdilik 6 saatlik cooldown kullanılıyor.",
+  "twitchError": "Twitch isteğinizle ilgili bir şey oldu: %1",
   "commands": {
     "help": {
       "triggers": ["yardım", "y"],
-      "helpText": "`%1yardım <komut>` (Belirli bir komutla ilgili yardım almak için <komut> komutunu değiştirin.)",
+      "helpText": "`%1yardım <komut>` (Belirli bir komutla ilgili yardım almak için <komut> öğesini bir komutla değiştirin.)",
       "availableCommands": "Kullanılabilir komutlar",
       "message": "**Yardım komutları:** "
     },
     "uptime": {
-      "triggers": ["geçenzaman", "zaman", "çevrimiçi","uptime"],
-      "helpText": "`%1zaman` (Bot çalışma süresini gösterir.)",
-      "message": "Çevrim içi olduğu süre",
+      "triggers": ["uptime", "timeup", "çalışma"],
+      "helpText": "`%1çalışma` (Botun çalışma süresini gösterir.)",
+      "message": "için çevrimiçi oldu",
       "hoursComma": "saat,",
       "minutesAnd": "dakika ve",
       "seconds": "saniye",
-      "onlineSince": "çevrimiçi"
+      "onlineSince": "Şu tarihten beri çevrimiçi"
     },
     "add": {
       "triggers": ["ekle", "+"],
-      "helpText": "%1 `%2ekle Yayıncı_Adı` (Duyuru'ya bir Twitch yayıncısı ekler.)",
-      "gameInfoName": "(ÖRNEK) Oyun adı buraya gelir",
-      "streamInfoTitle": "(ÖRNEK) Yayın başlığı buraya gelir",
-      "alreadyExists": "Üzgünüm, zaten eklenmiş!",
-      "message": "Başarılı, duyuruya yayıncı eklendi.",
-      "addAnnouncementChannel": "`!kanal #kanalismi` ile duyuru kanalı eklemeyi unutmayın."
+      "helpText": "%1 `%2ekle yayıncı` (Sunucuya bir Twitch akışı ekler.)",
+      "gameInfoName": "(BKNZ) Oyun adı buraya gelecek",
+      "streamInfoTitle": "(BKNZ) Akış başlığı buraya gelir",
+      "streamInfoType": "(BKNZ) CANLI/VOD/REERUN...",
+      "alreadyExists": "zaten ekli lütfen başka bir yayıncı dene veya kaldır!",
+      "message": "https://www.twitch.tv/%1 duyuruya başarılı bir şekilde eklendi.",
+      "addAnnouncementChannel": "`!kanal #kanalisim` ile duyuru kanalını eklemeyi unutmayın.",
+      "doesNotExist": "https://www.twitch.tv/%1 böyle bir kanal bulunmuyor!"
     },
     "remove": {
-      "triggers": ["kal", "kaldır", "-", "sil"],
-      "helpText": "%1 `%2kaldır Yayıncı_Adı` (Bir Twitch yayıncısını duyurudan kaldırır.)",
-      "doesNotExist": "Üzgünüm, bu yayıncı zaten mevcut değil!",
-      "message": "Başarılı, yayıncı duyurudan kaldırıldı."
+      "triggers": ["-", "kaldır"],
+      "helpText": "%1 `%2kaldır yayıncı` (Duyurudan bir Twitch akışını kaldırır.)",
+      "doesNotExist": "Liste'de bulunamıyor!",
+      "message": "yayıncı duyurudan kaldırıldı."
     },
     "channel": {
-      "triggers": ["ka", "kan", "kanal"],
-      "helpText": "%1 `%2kanal #%3` veya %1 `!kanal %4` (**Gerekli!** Duyurular için metin kanalı seçmelisin.)",
-      "message": "Başarılı, duyuru kanalı değiştirildi.",
-      "noPermissionsForChannel": "bu kanalda yayın gönderemezsiniz. İzinleri değiştirin veya başka bir kanal seçin."
+      "triggers": ["kanal", "kanalayar"],
+      "helpText": "%1 `%2kanal #%3` veya %1 `%2kanalayar %4` (**Zorunlu!** Duyurular için metin kanalı.)",
+      "message": "duyuru kanalı değişti",
+      "noPermissionsForChannel": "o kanalda paylaşım yapılamaz. İzinleri değiştirin veya başka bir kanal seçin."
     },
     "operator": {
-      "triggers": ["yetki", "yetkili","mod"],
-      "helpText": "%1 `%2yetkili <@%3>` (bir yetkili seç.)",
-      "message": "%1 artık yetkili.",
+      "triggers": ["yetki", "yetkili"],
+      "helpText": "%1 `%2yetki <@%3>` (bot için bir yetkili ayarla.)",
+      "message": "%1 yetkili.",
       "noPermission": "Yalnızca sunucu sahibi yetkili ekleyebilir ve kaldırabilir."
     },
     "reaction": {
       "triggers": ["tepki", "tepkiler"],
-      "helpText": "%1 `%2tepki 👍` (Duyuru mesajındaki bir tepkiyi değiştirir.)",
-      "message": "%1 tepki olarak eklendi."
+      "helpText": "%1 `%2tepki 👍` (Duyuru mesajına bir tepki verir.)",
+      "message": "%1 tepki eklendi."
     },
     "timezone": {
-      "triggers": ["sd", "saatdilimi"],
-      "helpText": "%1 `%2saatdilimi tr-TR Europe/Istanbul` (__IANA BCP 47 Alt etiketi kayıt defterini kontrol et__ <https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry> & __IETF RFC 5646__ <https://tools.ietf.org/html/rfc5646> yerel etiketler ve __IANA Time Zone Database__ <https://www.iana.org/time-zones> & __Wikipedia__ <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones> zaman dilimleri için.)",
-      "message": "Saat dilimi artık böyle gözükecek: %1"
+      "triggers": ["zd", "zamandilimi"],
+      "helpText": "%1 `%2zamandilimi tr-TR Europe/İstanbul` (__IANA BCP 47 Alt etiket kayıt defterini kontrol edin__ <https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry> & __IETF RFC 5646__ <https://www.iana.org/assignments/language-subtag-registry> Yerel ayar etiketleri için ://tools.ietf.org/html/rfc5646> ve __IANA Saat Dilimi Veritabanı__ <https://www.iana.org/time-zones> & __Wikipedia__ <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones> saat dilimleri için.)",
+      "message": "Saat şimdi şu şekilde görüntülenecek: %1"
     },
     "message": {
       "triggers": ["msj", "mesaj"],
-      "helpText": "%1 `%2mesaj @everyone %name% **%status%**, ile **%game%**:\n*%title%*` (Yayın duyuru mesajını değiştirin. Destekledikleri *%name%* ile yayıncı adı, *%status%* yayın türü için (VOD, Canlı, Tekrar Yayını), *%game%* yayın katagorisi ve *%title%* yayın başlığı.)",
-      "message": "Başarılı, duyuru başlığı değiştirildi."
+      "helpText": "%1 `%2mesaj <yayıncıadı> @everyone %name% **%status%**, **%game%** ile: *%title%*` (Yayın duyuru mesajını değiştirin. *<yayıncıisim>* doluysa dışarı çıkarsa yayıncının duyuru mesajını değiştirir.`<>` işaretini kaldırdığınızdan emin olun. Yayıncının adı için *%name%*, yayın türü için *%status%* (VOD, LIVE, RERUN), *%game destekler Oyun başlığı için %* ve akış başlığı için *%title%*, twitch bağlantısı için *%link%*.)",
+      "message": "Değiştirilen duyuru mesajı.",
+      "messageStreamer": "Yayıncı için duyuru mesajı değiştirildi %1."
     },
     "prefix": {
-      "triggers": ["pfx", "prefix","önek","ünvan"],
-      "helpText": "%1 `%2önek !` (Bot'un komut önekini değiştirir.)",
-      "message": "Başarılı prefix değiştirildi. Prefixiniz: `%1`."
-     },
+      "triggers": ["pfx", "prefix"],
+      "helpText": "%1 `%2prefix !` (Bot'un komut önekini değiştirir.)",
+      "message": "prefix şimdi `%1`."
+    },
     "language": {
-      "triggers": ["dil", "diller"],
-      "helpText": "%1 `%2dil turkish` (Botun dilini değiştirir.)\n**Mevcut diller:** %3",
-      "languageDoesNotExit": "Üzgünüm, bu dil mevcut değil!\n**Mevcut diller:** %1",
-      "message": "Başarılı dil değiştirildi: `%1`!"
+      "triggers": ["dil", "dildeğiştir"],
+      "helpText": "%1 `%2dil turkish` (Bot'un dilini değiştirir.)\n**Kullanılabilir diller:** %3",
+      "languageDoesNotExit": "Bu dil mevcut değil!\n**Kullanılabilir diller:** %1",
+      "message": "Dili değiştirildi `%1`!"
+    },
+    "announcementChannel": {
+      "triggers": ["dk", "duyurukanal"],
+      "helpText": "%1 `%2duyurukanalı Yayıncı_Adı #%3' veya %1 `%2announcementchannel Yayıncı_Adı %4' (Belirtilen yayıncı için duyuru kanalını değiştirir.)",
+      "message": "yayıncı için duyuru kanalı değiştirildi.",
+      "noPermissionsForChannel": "o kanalda paylaşım yapılamaz. İzinleri değiştirin veya başka bir kanal seçin.",
+      "streamerDoesNotExist": "yayıncı mevcut değil!",
+      "announcementChannel": "%1'in duyuru kanalı %2"
+    },
+    "streamers": {
+      "triggers": ["yayıncılar", "liste", "yayıncıliste"],
+      "helpText": "Eklenen yayıncıların listesini gösterir.",
+      "message": "**Eklenen yayıncıların listesi:** \n%1"
     }
   },
-  "example": "(ÖRNEK)",
+  "example": "(BKNZ)",
   "added": "Eklendi",
   "removed": "Silindi"
 }
