@@ -6,6 +6,7 @@ import data, { cache, loadData, saveData } from './data.js'
 import { headers, refreshAppToken } from './token.js'
 import translate from './translation.js'
 import { sendMessage } from './message.js'
+import log from './logger.js'
 
 // https://stackoverflow.com/a/55435856
 function chunks (arr, n) {
@@ -22,14 +23,14 @@ export async function check () {
   try {
     data().guilds = loadData().guilds
   } catch (err) {
-    console.log(translate.genericDataJSONErrorRetry)
+    log(translate.genericDataJSONErrorRetry)
     setTimeout(check, 60000)
     return console.error(err)
   }
 
   if (disconnect) {
     setTimeout(check, 3000)
-    return console.log(translate.disconnectedDiscord)
+    return log(translate.disconnectedDiscord)
   }
 
   const continueBoolean = await refreshAppToken()
@@ -53,7 +54,7 @@ export async function check () {
 
   if (streamersArr.length < 1) {
     setTimeout(check, typeof settings.timer === 'number' ? settings.timer + 5000 : 61000)
-    return console.log(translate.noTwitchChannels)
+    return log(translate.noTwitchChannels)
   }
 
   try {
@@ -175,13 +176,13 @@ export async function check () {
 
     await Promise.all(announcements) // Send announcements.
 
-    if (announcements.length > 0) console.log(translate.announcedStreams)
+    if (announcements.length > 0) log(translate.announcedStreams)
     setTimeout(check, typeof settings.timer === 'number' ? settings.timer : 61000)
   } catch (e) {
     if (e.error === 'Too Many Requests') {
       settings.timer += 5000
       setTimeout(check, typeof settings.timer === 'number' ? settings.timer : 61000)
-      return console.log(translate.throttledByTwitch, translate.twitchThrottleMessage, e.message)
+      return log(translate.throttledByTwitch, translate.twitchThrottleMessage, e.message)
     } else {
       settings.timer += 60000
       setTimeout(check, typeof settings.timer === 'number' ? settings.timer : 61000)

@@ -3,6 +3,7 @@ import fetch from 'got'
 
 import settings from './settings.js'
 import translate from './translation.js'
+import log from './logger.js'
 
 const tokenFileLocation = new URL('../token.json', import.meta.url)
 
@@ -17,7 +18,7 @@ export async function refreshAppToken () {
       tokenJSON = JSON.parse(fs.readFileSync(tokenFileLocation))
       tokenExpirationDate = tokenJSON.expiration
 
-      console.log(translate.usingExistingToken, new Date(tokenJSON.expiration).toUTCString())
+      log(translate.usingExistingToken, new Date(tokenJSON.expiration).toUTCString())
       headers = {
         Authorization: `Bearer ${tokenJSON.superSecret}`,
         'Client-ID': settings.twitch.clientID
@@ -36,8 +37,8 @@ export async function refreshAppToken () {
 
         if (res.client_id !== settings.twitch.clientID) throw new Error('Missmatch')
       } catch (err) {
-        if (err.message === 'Missmatch') console.log(translate.missmatchToken)
-        console.log(translate.invalidTokenResponse)
+        if (err.message === 'Missmatch') log(translate.missmatchToken)
+        log(translate.invalidTokenResponse)
         tokenExpirationDate = 0
       }
     } catch (e) {
@@ -58,7 +59,7 @@ export async function refreshAppToken () {
         'Client-ID': settings.twitch.clientID
       }
 
-      console.log(translate.wroteTokenToDisk)
+      log(translate.wroteTokenToDisk)
       fs.writeFileSync(tokenFileLocation, JSON.stringify({
         expiration: expirationDate,
         superSecret: res.access_token
@@ -66,7 +67,7 @@ export async function refreshAppToken () {
 
       tokenExpirationDate = expirationDate
     } catch (err) {
-      console.log(translate.genericTokenError)
+      log(translate.genericTokenError)
       console.error(err)
       return false
     }

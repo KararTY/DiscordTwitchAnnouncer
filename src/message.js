@@ -5,6 +5,7 @@ import moment from 'moment-timezone'
 import client from './client.js'
 import data from './data.js'
 import translate, { translateDefault } from './translation.js'
+import log from './logger.js'
 
 export class Msg {
   /**
@@ -106,8 +107,8 @@ export async function sendMessage (guildID, streamerInfo, { cachedImage, streamI
       }
     }
 
-    console.log(translate.announcedInOverAtGuild, streamInfo.name, client.channels.cache.get(announcementChannel).name, client.guilds.cache.get(guildID).name)
-  } else console.log(translate.announcementChannelDoesNotExist, announcementChannel, client.guilds.cache.get(guildID).name)
+    log(translate.announcedInOverAtGuild, streamInfo.name, client.channels.cache.get(announcementChannel).name, client.guilds.cache.get(guildID).name)
+  } else log(translate.announcementChannelDoesNotExist, announcementChannel, client.guilds.cache.get(guildID).name)
 
   return Promise.resolve()
 }

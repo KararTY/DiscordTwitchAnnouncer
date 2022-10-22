@@ -2,6 +2,7 @@ import fs from 'fs'
 
 import translate from './translation.js'
 import settings from './settings.js'
+import { debugLog } from './logger.js'
 
 const fileLocation = new URL('../data.json', import.meta.url)
 
@@ -54,6 +55,7 @@ export function saveData (d = [{ guild: '', entry: '', action: '', value: 'any' 
   }
 
   cacheData.guilds = dataOnFile.guilds
+  debugLog(`Writing to data.json file: ${JSON.stringify(d)}`)
 
   return fs.writeFileSync(fileLocation, JSON.stringify(dataOnFile, null, 2))
 }

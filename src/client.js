@@ -6,6 +6,7 @@ import commands from './commands/index.js'
 import translate, { translateDefault } from './translation.js'
 import { Msg } from './message.js'
 import { check } from './check.js'
+import log from './logger.js'
 
 export let disconnect = false
 
@@ -58,7 +59,7 @@ client.on('guildCreate', guild => {
   if (!data().guilds[guild.id]) {
     cache().guilds[guild.id] = []
     saveData([{ guild: guild.id, action: 'addGuild' }])
-    console.log(translate.addedGuild)
+    log(translate.addedGuild)
   }
 })
 
@@ -66,12 +67,12 @@ client.on('guildDelete', guild => {
   if (data().guilds[guild.id]) {
     cache().guilds[guild.id] = undefined
     saveData([{ guild: guild.id, action: 'removeGuild' }])
-    console.log(translate.removedGuild)
+    log(translate.removedGuild)
   }
 })
 
 client.once('ready', async () => {
-  console.log(translate.loggedIntoDiscord)
+  log(translate.loggedIntoDiscord)
 
   client.guilds.cache.forEach(guild => {
     if (!data().guilds[guild.id]) {
@@ -101,14 +102,14 @@ client.once('ready', async () => {
 })
 
 client.on('reconnecting', () => {
-  console.log(translate.reconnectingToDiscord)
+  log(translate.reconnectingToDiscord)
   disconnect = true
 }).on('resume', () => {
-  console.log(translate.reconnectedToDiscord)
+  log(translate.reconnectedToDiscord)
   disconnect = false
 }).on('disconnect', () => {
   disconnect = true
   client.login(settings.discord.token)
-}).login(settings.discord.token).catch(e => console.log(e))
+}).login(settings.discord.token).catch(e => log(e))
 
 export default client
