@@ -1,8 +1,11 @@
-import { Msg } from '../message.js'
 import { saveData } from '../data.js'
 import { translations } from '../translation.js'
 
 import Command from './command.js'
+
+/**
+ * @typedef { import("../message.js").Msg } Msg
+ */
 
 export default class LanguageCommand extends Command {
   constructor (translate) {

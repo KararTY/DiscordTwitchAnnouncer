@@ -1,10 +1,13 @@
 import fetch from 'got'
 
-import { Msg } from '../message.js'
 import data, { cache, saveData } from '../data.js'
 import { headers, refreshAppToken } from '../token.js'
 
 import Command from './command.js'
+
+/**
+ * @typedef { import("../message.js").Msg } Msg
+ */
 
 export default class AddCommand extends Command {
   constructor (translate) {

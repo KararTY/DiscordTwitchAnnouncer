@@ -1,4 +1,6 @@
-import { Msg } from '../message.js'
+/**
+ * @typedef { import("../message.js").Msg } Msg
+ */
 
 export default class Command {
   constructor (translate) {

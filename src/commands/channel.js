@@ -1,9 +1,12 @@
 import { ChannelType, PermissionsBitField } from 'discord.js'
 
-import { Msg } from '../message.js'
 import { saveData } from '../data.js'
 
 import Command from './command.js'
+
+/**
+ * @typedef { import("../message.js").Msg } Msg
+ */
 
 export default class ChannelCommand extends Command {
   constructor (translate) {

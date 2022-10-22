@@ -1,9 +1,11 @@
 import moment from 'moment-timezone'
 import data from '../data.js'
 
-import { Msg } from '../message.js'
-
 import Command from './command.js'
+
+/**
+ * @typedef { import("../message.js").Msg } Msg
+ */
 
 const initialization = new Date()
 
