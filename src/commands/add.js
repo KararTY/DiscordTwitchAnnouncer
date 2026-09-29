@@ -39,7 +39,7 @@ export default class AddCommand extends Command {
 
     await refreshAppToken()
 
-    const request = await fetch(`https://api.twitch.tv/helix/users/?login=${sanitizedStreamerName}`, { headers, responseType: 'json' })
+    const request = await fetch('https://api.twitch.tv/helix/users/', { searchParams: { login: sanitizedStreamerName }, headers, responseType: 'json' })
 
     let user
     try {
